@@ -1,0 +1,103 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const events = [
+  {
+    slug: "europe-2025",
+    year: "2025",
+    title: "Europe",
+    description: "Traveled through Europe—an adventure exploring new places and cultures.",
+    month: "September",
+    preview: ["/images/timeline/europe/IMG_3509.JPG", "/images/timeline/europe/IMG_5176.jpeg"],
+    hasDetail: true,
+  },
+  {
+    slug: "house-renovation",
+    year: "2021",
+    title: "House Renovation",
+    description: "Major home renovation—new floors, paint, fixtures, and more.",
+    month: "August",
+    preview: ["/images/timeline/house-renovation/1_before.jpg", "/images/timeline/house-renovation/1_after.JPG"],
+    hasDetail: true,
+  },
+  {
+    slug: "phd-begins",
+    year: "2021",
+    title: "PhD Journey Begins",
+    description: "Started PhD research in ML and health technology at USC.",
+    month: "August",
+    preview: [],
+    hasDetail: false,
+  },
+];
+---
+
+<Layout title="Timeline" description="A chronology of memories and milestones.">
+  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+
+    <header class="mb-16">
+      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Timeline</p>
+      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+        A chronology of memories and milestones.
+      </h1>
+    </header>
+
+    <div class="relative">
+      <!-- Vertical line -->
+      <div class="absolute left-0 top-0 bottom-0 w-px bg-walnut/10"></div>
+
+      <div class="space-y-12">
+        {events.map((event) => (
+          <article class="relative pl-8 group">
+            <!-- Dot -->
+            <div class="absolute left-0 top-2 w-2 h-2 -translate-x-1/2 rounded-full bg-cognac"></div>
+
+            <p class="text-xs text-warm-gray tracking-widest uppercase mb-2">
+              {event.month ? `${event.month} ${event.year}` : event.year}
+            </p>
+
+            {event.hasDetail ? (
+              <a href={`/timeline/${event.slug}`} class="block">
+                <h2 class="font-serif text-xl text-walnut mb-2 group-hover:text-cognac transition-colors">
+                  {event.title}
+                </h2>
+                <p class="text-warm-gray leading-relaxed mb-4">
+                  {event.description}
+                </p>
+                {event.preview.length > 0 && (
+                  <div class="flex gap-2">
+                    {event.preview.slice(0, 2).map((src) => (
+                      <img
+                        src={src}
+                        alt=""
+                        class="w-24 h-24 object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                        onerror="this.style.display='none'"
+                      />
+                    ))}
+                    <span class="text-xs text-warm-gray self-end mb-1">View more →</span>
+                  </div>
+                )}
+              </a>
+            ) : (
+              <>
+                <h2 class="font-serif text-xl text-walnut mb-2">
+                  {event.title}
+                </h2>
+                <p class="text-warm-gray leading-relaxed">
+                  {event.description}
+                </p>
+              </>
+            )}
+          </article>
+        ))}
+      </div>
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-walnut/10">
+      <p class="text-warm-gray text-sm">
+        More memories to come. This timeline will grow.
+      </p>
+    </div>
+
+  </div>
+</Layout>

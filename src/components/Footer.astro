@@ -1,0 +1,22 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="mt-auto">
+  <div class="max-w-6xl mx-auto px-6 py-16">
+    <div class="border-t border-walnut/10 pt-8">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs tracking-widest uppercase text-warm-gray">
+        <span>&copy; {currentYear}</span>
+
+        <div class="flex items-center gap-6">
+          <a href="https://github.com/smithandrewk" target="_blank" rel="noopener noreferrer" class="hover:text-walnut transition-colors">
+            GitHub
+          </a>
+          <a href="mailto:andrewsmith@sc.edu" class="hover:text-walnut transition-colors">
+            Email
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

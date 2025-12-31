@@ -1,0 +1,147 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const images = [
+  { src: "/images/gallery/teton_inside.jpg", alt: "Grand Teton National Park" },
+  { src: "/images/gallery/tahoe.jpeg", alt: "Lake Tahoe" },
+  { src: "/images/gallery/teton_meadow.JPG", alt: "Teton Meadow" },
+  { src: "/images/gallery/logging_lake.JPG", alt: "Logging Lake" },
+  { src: "/images/gallery/group_teton.jpg", alt: "Group at Teton" },
+  { src: "/images/gallery/museum_gig.jpg", alt: "Museum Gig" },
+  { src: "/images/gallery/g_wedding_boys.jpeg", alt: "Wedding" },
+  { src: "/images/gallery/zenas_mountain.JPG", alt: "Mountain View" },
+  { src: "/images/gallery/camp_kev.JPG", alt: "Camping" },
+  { src: "/images/gallery/teton_valley.jpg", alt: "Teton Valley" },
+];
+---
+
+<Layout title="Gallery" description="Photos from adventures, gigs, and life moments.">
+  <div class="max-w-6xl mx-auto px-6 py-16 md:py-24">
+
+    <header class="max-w-3xl mb-16">
+      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Gallery</p>
+      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+        Moments captured along the way.
+      </h1>
+    </header>
+
+    <div class="columns-2 md:columns-3 gap-4 space-y-4">
+      {images.map((image, index) => (
+        <button
+          class="gallery-item block w-full break-inside-avoid cursor-pointer group"
+          data-index={index}
+          data-src={image.src}
+          data-alt={image.alt}
+        >
+          <img
+            src={image.src}
+            alt={image.alt}
+            class="w-full transition-opacity duration-300 group-hover:opacity-90"
+            loading="lazy"
+          />
+        </button>
+      ))}
+    </div>
+
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="fixed inset-0 z-50 hidden bg-espresso/95 backdrop-blur-sm">
+    <button
+      id="lightbox-close"
+      class="absolute top-6 right-6 text-cream/60 hover:text-cream transition-colors"
+      aria-label="Close"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <button
+      id="lightbox-prev"
+      class="absolute left-6 top-1/2 -translate-y-1/2 text-cream/60 hover:text-cream transition-colors"
+      aria-label="Previous"
+    >
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+
+    <button
+      id="lightbox-next"
+      class="absolute right-6 top-1/2 -translate-y-1/2 text-cream/60 hover:text-cream transition-colors"
+      aria-label="Next"
+    >
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+
+    <div class="flex items-center justify-center h-full p-12">
+      <img id="lightbox-image" src="" alt="" class="max-h-full max-w-full object-contain" />
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const galleryItems = document.querySelectorAll('.gallery-item');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+  const closeBtn = document.getElementById('lightbox-close');
+  const prevBtn = document.getElementById('lightbox-prev');
+  const nextBtn = document.getElementById('lightbox-next');
+
+  let currentIndex = 0;
+  const images = Array.from(galleryItems).map(item => ({
+    src: item.getAttribute('data-src'),
+    alt: item.getAttribute('data-alt')
+  }));
+
+  function openLightbox(index: number) {
+    currentIndex = index;
+    updateLightbox();
+    lightbox?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox?.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function updateLightbox() {
+    if (lightboxImage) {
+      lightboxImage.src = images[currentIndex].src || '';
+      lightboxImage.alt = images[currentIndex].alt || '';
+    }
+  }
+
+  function showNext() {
+    currentIndex = (currentIndex + 1) % images.length;
+    updateLightbox();
+  }
+
+  function showPrev() {
+    currentIndex = (currentIndex - 1 + images.length) % images.length;
+    updateLightbox();
+  }
+
+  galleryItems.forEach((item, index) => {
+    item.addEventListener('click', () => openLightbox(index));
+  });
+
+  closeBtn?.addEventListener('click', closeLightbox);
+  prevBtn?.addEventListener('click', showPrev);
+  nextBtn?.addEventListener('click', showNext);
+
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (lightbox?.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') showNext();
+    if (e.key === 'ArrowLeft') showPrev();
+  });
+</script>

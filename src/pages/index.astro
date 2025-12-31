@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Home">
+  <section class="min-h-[80vh] flex items-center">
+    <div class="max-w-5xl mx-auto px-6 py-20 md:py-32">
+      <div class="grid md:grid-cols-[1fr,1.2fr] gap-12 md:gap-16 items-center">
+
+        <!-- Photo -->
+        <div class="order-2 md:order-1">
+          <div class="aspect-[4/5] max-w-sm mx-auto md:mx-0">
+            <img
+              src="/images/avatar.png"
+              alt="Andrew Smith"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="order-1 md:order-2">
+          <p class="text-warm-gray text-sm tracking-widest uppercase mb-6">
+            South Carolina
+          </p>
+
+          <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-walnut leading-tight mb-8">
+            Andrew Smith
+          </h1>
+
+          <div class="w-12 h-px bg-cognac mb-8"></div>
+
+          <p class="text-warm-gray leading-relaxed">
+            50% chance I'm doing machine learning · 20% chance I'm playing keys · 20% chance I'm making coffee · 30% chance I'm on Robinhood · 100% chance I'm Andrew
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const books = [
+  { title: "The Art of Doing Science and Engineering", author: "Richard Hamming", note: "reading now" },
+  { title: "The Return of the King", author: "J.R.R. Tolkien" },
+];
+
+const music = [
+  { title: "Older and Wiser", artist: "Lizzy McAlpine" },
+];
+
+const podcasts = [
+  { title: "The Diary of a CEO" },
+  { title: "The All-In Podcast" },
+  { title: "The Iced Coffee Hour" },
+];
+---
+
+<Layout title="Consuming" description="What I'm reading, watching, and listening to.">
+  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+
+    <header class="mb-16">
+      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Consuming</p>
+      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+        What I'm consuming.
+      </h1>
+    </header>
+
+    <section class="mb-16">
+      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">Books</p>
+      <div class="space-y-4">
+        {books.map((book) => (
+          <div>
+            <p class="text-charcoal">
+              {book.title}
+              {book.note && <span class="text-xs text-cognac ml-2">— {book.note}</span>}
+            </p>
+            <p class="text-sm text-warm-gray">{book.author}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="mb-16 pt-8 border-t border-walnut/10">
+      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">Music</p>
+      <div class="space-y-4">
+        {music.map((album) => (
+          <div>
+            <p class="text-charcoal">{album.title}</p>
+            <p class="text-sm text-warm-gray">{album.artist}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="pt-8 border-t border-walnut/10">
+      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">Podcasts</p>
+      <div class="space-y-4">
+        {podcasts.map((podcast) => (
+          <p class="text-charcoal">{podcast.title}</p>
+        ))}
+      </div>
+    </section>
+
+    <div class="mt-16 pt-8 border-t border-walnut/10">
+      <p class="text-warm-gray text-sm">
+        Last updated {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+      </p>
+    </div>
+
+  </div>
+</Layout>

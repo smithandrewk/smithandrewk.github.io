@@ -1,0 +1,54 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const sortedPosts = posts.sort((a, b) =>
+  new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+---
+
+<Layout title="Journal" description="Thoughts on ML, music, building, and life.">
+  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+
+    <header class="mb-16">
+      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Journal</p>
+      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+        Thoughts, learnings, and occasional ramblings.
+      </h1>
+    </header>
+
+    {sortedPosts.length > 0 ? (
+      <div class="space-y-12">
+        {sortedPosts.map((post) => (
+          <article class="group">
+            <a href={`/blog/${post.slug}`} class="block">
+              <time class="text-xs text-warm-gray tracking-widest uppercase">
+                {new Date(post.data.date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </time>
+              <h2 class="font-serif text-xl md:text-2xl text-walnut mt-2 group-hover:text-cognac transition-colors">
+                {post.data.title}
+              </h2>
+              {post.data.description && (
+                <p class="text-warm-gray mt-2 leading-relaxed">
+                  {post.data.description}
+                </p>
+              )}
+            </a>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-16">
+        <p class="text-warm-gray">
+          Writing in progress. Check back soon.
+        </p>
+      </div>
+    )}
+
+  </div>
+</Layout>

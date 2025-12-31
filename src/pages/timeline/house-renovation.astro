@@ -1,0 +1,89 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const beforeAfterPairs = [
+  { before: "/images/timeline/house-renovation/1_before.jpg", after: "/images/timeline/house-renovation/1_after.JPG" },
+  { before: "/images/timeline/house-renovation/2_before.jpg", after: "/images/timeline/house-renovation/2_after.JPG" },
+  { before: "/images/timeline/house-renovation/3_before.jpg", after: "/images/timeline/house-renovation/3_after.JPG" },
+  { before: "/images/timeline/house-renovation/4_before.jpeg", after: "/images/timeline/house-renovation/4_after.JPG" },
+  { before: "/images/timeline/house-renovation/5_before.jpeg", after: "/images/timeline/house-renovation/5_after.JPG" },
+];
+
+const generalAfter = [
+  "/images/timeline/house-renovation/general_after_1.JPG",
+  "/images/timeline/house-renovation/general_after_2.JPG",
+  "/images/timeline/house-renovation/general_after_3.JPG",
+];
+---
+
+<Layout title="House Renovation" description="August 2021 home renovation project.">
+  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+
+    <header class="mb-12">
+      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
+        ← Timeline
+      </a>
+
+      <p class="text-xs text-warm-gray tracking-widest uppercase mt-8 mb-2">August 2021</p>
+      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+        House Renovation
+      </h1>
+    </header>
+
+    <div class="prose mb-12">
+      <p>
+        Major home renovation—new floors, paint, fixtures, and more.
+      </p>
+    </div>
+
+    <!-- Before & After Pairs -->
+    <div class="space-y-12 mb-16">
+      {beforeAfterPairs.map((pair, index) => (
+        <div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-warm-gray tracking-widest uppercase mb-2">Before</p>
+              <img
+                src={pair.before}
+                alt="Before renovation"
+                class="w-full"
+                loading="lazy"
+              />
+            </div>
+            <div>
+              <p class="text-xs text-warm-gray tracking-widest uppercase mb-2">After</p>
+              <img
+                src={pair.after}
+                alt="After renovation"
+                class="w-full"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- General After Photos -->
+    <div class="border-t border-walnut/10 pt-12">
+      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">The finished home</p>
+      <div class="columns-2 md:columns-3 gap-4 space-y-4">
+        {generalAfter.map((src) => (
+          <img
+            src={src}
+            alt="Finished renovation"
+            class="w-full break-inside-avoid"
+            loading="lazy"
+          />
+        ))}
+      </div>
+    </div>
+
+    <footer class="mt-16 pt-8 border-t border-walnut/10">
+      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
+        ← Back to Timeline
+      </a>
+    </footer>
+
+  </div>
+</Layout>

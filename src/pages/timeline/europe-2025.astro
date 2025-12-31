@@ -1,0 +1,58 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const images = [
+  { src: "/images/timeline/europe/IMG_3509.JPG", alt: "Europe" },
+  { src: "/images/timeline/europe/IMG_5176.jpeg", alt: "Europe" },
+  { src: "/images/timeline/europe/IMG_5186.jpeg", alt: "Europe" },
+  { src: "/images/timeline/europe/IMG_8822.JPG", alt: "Europe" },
+  { src: "/images/timeline/europe/DSCF0114.JPG", alt: "Europe" },
+];
+---
+
+<Layout title="Europe 2025" description="September 2025 trip through Europe.">
+  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+
+    <header class="mb-12">
+      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
+        ← Timeline
+      </a>
+
+      <p class="text-xs text-warm-gray tracking-widest uppercase mt-8 mb-2">September 2025</p>
+      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+        Europe
+      </h1>
+    </header>
+
+    <div class="prose mb-12">
+      <p>
+        Traveled through Europe—an adventure exploring new places and cultures.
+      </p>
+      <!-- Add more writing here if you want -->
+    </div>
+
+    {images.length > 0 ? (
+      <div class="columns-2 md:columns-3 gap-4 space-y-4">
+        {images.map((image) => (
+          <img
+            src={image.src}
+            alt={image.alt}
+            class="w-full break-inside-avoid"
+            loading="lazy"
+          />
+        ))}
+      </div>
+    ) : (
+      <div class="text-warm-gray text-sm">
+        Photos coming soon.
+      </div>
+    )}
+
+    <footer class="mt-16 pt-8 border-t border-walnut/10">
+      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
+        ← Back to Timeline
+      </a>
+    </footer>
+
+  </div>
+</Layout>
