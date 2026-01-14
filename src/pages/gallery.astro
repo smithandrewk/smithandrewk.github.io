@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 
 const images = [
+  { src: "/images/gallery/IMG_4346.jpeg", alt: "Photo" },
+  { src: "/images/gallery/IMG_9487.JPG", alt: "Photo" },
   { src: "/images/gallery/teton_inside.jpg", alt: "Grand Teton National Park" },
   { src: "/images/gallery/tahoe.jpeg", alt: "Lake Tahoe" },
   { src: "/images/gallery/teton_meadow.JPG", alt: "Teton Meadow" },
@@ -12,6 +14,20 @@ const images = [
   { src: "/images/gallery/zenas_mountain.JPG", alt: "Mountain View" },
   { src: "/images/gallery/camp_kev.JPG", alt: "Camping" },
   { src: "/images/gallery/teton_valley.jpg", alt: "Teton Valley" },
+  { src: "/images/gallery/0.jpg", alt: "Photo" },
+  { src: "/images/gallery/1.jpg", alt: "Photo" },
+  { src: "/images/gallery/2.jpg", alt: "Photo" },
+  { src: "/images/gallery/3.jpg", alt: "Photo" },
+  { src: "/images/gallery/4.jpg", alt: "Photo" },
+  { src: "/images/gallery/5.jpg", alt: "Photo" },
+  { src: "/images/gallery/6.jpg", alt: "Photo" },
+  { src: "/images/gallery/camping_w_g.jpg", alt: "Camping" },
+  { src: "/images/gallery/g_camping.jpg", alt: "Camping" },
+  { src: "/images/gallery/group_top_teton.JPG", alt: "Group at Top of Teton" },
+  { src: "/images/gallery/john_rock.JPG", alt: "John Rock" },
+  { src: "/images/gallery/paige_wedding_zenas.jpeg", alt: "Wedding" },
+  { src: "/images/gallery/taylor_white_wedding.jpg", alt: "Wedding" },
+  { src: "/images/gallery/teton_one_wheel.JPG", alt: "Teton One Wheel" },
 ];
 ---
 
@@ -25,10 +41,10 @@ const images = [
       </h1>
     </header>
 
-    <div class="columns-2 md:columns-3 gap-4 space-y-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
       {images.map((image, index) => (
         <button
-          class="gallery-item block w-full break-inside-avoid cursor-pointer group"
+          class="gallery-item block w-full cursor-pointer group"
           data-index={index}
           data-src={image.src}
           data-alt={image.alt}
@@ -36,7 +52,7 @@ const images = [
           <img
             src={image.src}
             alt={image.alt}
-            class="w-full transition-opacity duration-300 group-hover:opacity-90"
+            class="w-full aspect-square object-cover transition-opacity duration-300 group-hover:opacity-90"
             loading="lazy"
           />
         </button>
