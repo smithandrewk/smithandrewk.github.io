@@ -38,6 +38,34 @@
   --transition-slow: 400ms ease;
 }
 
+/* ===== ESPRESSO MODE ===== */
+
+html.espresso {
+  --color-cream: #1A1512;
+  --color-linen: #2D2620;
+  --color-walnut: #D4C4B0;
+  --color-walnut-light: #BFA98E;
+  --color-cognac: #C87941;
+  --color-cognac-light: #D4915E;
+  --color-charcoal: #E8E0D6;
+  --color-warm-gray: #9A9590;
+  --color-warm-gray-light: #6B6560;
+  --color-espresso: #FAF7F2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.35), 0 8px 10px rgba(0, 0, 0, 0.2);
+}
+
+html.espresso .card {
+  background-color: var(--color-linen);
+}
+
+html.espresso .prose pre {
+  background-color: #0D0B09;
+}
+
 /* ===== BASE STYLES ===== */
 
 html {
@@ -56,6 +84,11 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.6s ease, color 0.6s ease;
+}
+
+*:not(path):not(svg):not(.no-transition), *::before, *::after {
+  transition: background-color 0.6s ease, color 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
 }
 
 /* Headings */
