@@ -465,7 +465,7 @@ const feedItems = [
                 muted
                 loop
                 playsinline
-                preload={i < 3 ? "auto" : "metadata"}
+                preload={i < 2 ? "auto" : "none"}
               />
               <div class="overlay" />
               <button class="mute-btn" aria-label="Toggle sound">
@@ -555,6 +555,26 @@ const feedItems = [
       });
 
       cards.forEach(card => observer.observe(card));
+
+      // --- Preload observer: buffer videos one screen ahead ---
+      const preloadObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const video = entry.target.querySelector('video') as HTMLVideoElement;
+            if (video && video.preload === 'none') {
+              video.preload = 'auto';
+              video.load();
+            }
+            preloadObserver.unobserve(entry.target);
+          }
+        });
+      }, {
+        root: feed,
+        rootMargin: '100% 0px',
+        threshold: 0
+      });
+
+      document.querySelectorAll('.card-video').forEach(card => preloadObserver.observe(card));
 
       // --- Before/After tap toggle ---
       document.querySelectorAll('.card-compare').forEach(card => {
