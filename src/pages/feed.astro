@@ -17,6 +17,8 @@ const feedItems = [
   { type: "before-after", before: "/images/timeline/house-renovation/1_before.jpg", after: "/images/timeline/house-renovation/1_after.JPG", caption: "House renovation" },
   { type: "photo", src: "/images/timeline/europe/DSCF0114.JPG", caption: "London", location: "England" },
   { type: "video", src: "/videos/IMG_5214_web.mp4", caption: "The Inception shot", location: "Paris" },
+  { type: "podcast", src: "/videos/podcast_clip_1.mp4", caption: "On humility", source: "Jordan Peterson" },
+  { type: "podcast", src: "/videos/podcast_clip_2.mp4", caption: "On encouragement", source: "Jordan Peterson" },
   { type: "photo", src: "/images/gallery/tahoe.jpeg", caption: "Lake Tahoe", location: "California" },
   { type: "photo", src: "/images/gallery/group_teton.jpg", caption: "The crew at Teton", location: "Grand Teton National Park" },
   { type: "video", src: "/videos/IMG_7052_web.mp4", caption: "Fred again.. & Lil Yachty", location: "Live" },
@@ -37,6 +39,14 @@ const feedItems = [
   { type: "photo", src: "/images/gallery/g_wedding_boys.jpeg", caption: "Wedding day", location: "South Carolina" },
   { type: "photo", src: "/images/timeline/europe/IMG_5186.jpeg", caption: "Europe, 2025", location: "Europe" },
   { type: "photo", src: "/images/gallery/teton_one_wheel.JPG", caption: "Onewheel in the Tetons", location: "Wyoming" },
+  { type: "person", name: "Taylor", media: [
+    { type: "photo", src: "/images/people/IMG_3008.jpeg" },
+    { type: "photo", src: "/images/people/IMG_7128.jpeg" },
+  ]},
+  { type: "person", name: "Drew", media: [
+    { type: "photo", src: "/images/people/IMG_1381.jpeg" },
+    { type: "photo", src: "/images/people/20211009_151034945_iOS.jpg" },
+  ]},
 ];
 ---
 
@@ -314,6 +324,161 @@ const feedItems = [
         white-space: nowrap;
       }
 
+      /* === Person card === */
+      .card-person {
+        background: var(--espresso);
+        -webkit-tap-highlight-color: transparent;
+        touch-action: pan-y;
+      }
+
+      .card-person .person-slide {
+        position: absolute;
+        inset: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .card-person .person-slide img,
+      .card-person .person-slide video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .card-person .person-slide:not(.active) {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .card-person .person-slide.active {
+        opacity: 1;
+      }
+
+      .card-person .person-badge {
+        position: absolute;
+        top: calc(4.5rem + env(safe-area-inset-top, 0px));
+        left: calc(1.5rem + env(safe-area-inset-left, 0px));
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.625rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(250, 247, 242, 0.8);
+        padding: 0.375rem 0.75rem;
+        background: rgba(26, 21, 18, 0.5);
+        border-radius: 100px;
+        backdrop-filter: blur(4px);
+      }
+
+      .card-person .person-dots {
+        position: absolute;
+        top: calc(4.5rem + env(safe-area-inset-top, 0px));
+        right: calc(1.5rem + env(safe-area-inset-right, 0px));
+        z-index: 5;
+        display: flex;
+        gap: 6px;
+      }
+
+      .card-person .person-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(250, 247, 242, 0.3);
+        transition: background 0.2s;
+      }
+
+      .card-person .person-dot.active {
+        background: var(--cream);
+      }
+
+      .card-person .swipe-nav {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+      }
+
+      .card-person .swipe-left,
+      .card-person .swipe-right {
+        flex: 1;
+        background: none;
+        border: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+      }
+
+      .card-person .swipe-left::after,
+      .card-person .swipe-right::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(26, 21, 18, 0.6);
+        border: 1px solid rgba(250, 247, 242, 0.2);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        transition: opacity 0.3s;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 22px;
+      }
+
+      .card-person .swipe-left::after {
+        left: 16px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15 19l-7-7 7-7'/%3E%3C/svg%3E");
+      }
+
+      .card-person .swipe-right::after {
+        right: 16px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M9 5l7 7-7 7'/%3E%3C/svg%3E");
+      }
+
+      .card-person:hover .swipe-left::after,
+      .card-person:hover .swipe-right::after {
+        opacity: 1;
+      }
+
+      /* Show arrows persistently on mobile until interacted */
+      .card-person.visible .swipe-left::after,
+      .card-person.visible .swipe-right::after {
+        animation: arrow-pulse 2s ease-in-out infinite;
+      }
+
+      .card-person.swiped .swipe-left::after,
+      .card-person.swiped .swipe-right::after {
+        animation: none;
+        opacity: 0;
+      }
+
+      @keyframes arrow-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+
+      /* === Podcast card === */
+      .card-podcast .podcast-badge {
+        position: absolute;
+        top: calc(4.5rem + env(safe-area-inset-top, 0px));
+        left: calc(1.5rem + env(safe-area-inset-left, 0px));
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.625rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(250, 247, 242, 0.8);
+        padding: 0.375rem 0.75rem;
+        background: rgba(26, 21, 18, 0.5);
+        border-radius: 100px;
+        backdrop-filter: blur(4px);
+      }
+
       /* === Floating nav === */
       .feed-nav {
         position: fixed;
@@ -517,6 +682,75 @@ const feedItems = [
           );
         }
 
+        if (item.type === "podcast") {
+          return (
+            <div class={`card card-video card-podcast ${i === 0 ? 'visible' : ''}`} data-index={i}>
+              <video
+                src={item.src}
+                muted
+                loop
+                playsinline
+                preload={i < 2 ? "auto" : "none"}
+              />
+              <div class="overlay" />
+              <span class="podcast-badge">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Podcast
+              </span>
+              <button class="mute-btn" aria-label="Toggle sound">
+                <svg class="icon-muted" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                </svg>
+                <svg class="icon-unmuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
+                </svg>
+              </button>
+              <div class="card-info">
+                <div class="card-caption">{item.caption}</div>
+                <div class="card-location">{item.source}</div>
+              </div>
+            </div>
+          );
+        }
+
+        if (item.type === "person") {
+          return (
+            <div class={`card card-person ${i === 0 ? 'visible' : ''}`} data-index={i} data-media={JSON.stringify(item.media)}>
+              {item.media.map((m: any, mi: number) => (
+                <div class={`person-slide ${mi === 0 ? 'active' : ''}`}>
+                  {m.type === "video" ? (
+                    <video src={m.src} muted loop playsinline preload="none" />
+                  ) : (
+                    <img src={m.src} alt={item.name} loading="lazy" />
+                  )}
+                </div>
+              ))}
+              <div class="overlay" />
+              <span class="person-badge">{item.name}</span>
+              {item.media.length > 1 && (
+                <div class="person-dots">
+                  {item.media.map((_: any, mi: number) => (
+                    <div class={`person-dot ${mi === 0 ? 'active' : ''}`} />
+                  ))}
+                </div>
+              )}
+              {item.media.length > 1 && (
+                <div class="swipe-nav">
+                  <button class="swipe-left" aria-label="Previous" />
+                  <button class="swipe-right" aria-label="Next" />
+                </div>
+              )}
+              <div class="card-info">
+                <div class="card-caption">{item.name}</div>
+              </div>
+            </div>
+          );
+        }
+
         if (item.type === "before-after") {
           return (
             <div class={`card card-compare ${i === 0 ? 'visible' : ''}`} data-index={i}>
@@ -535,10 +769,67 @@ const feedItems = [
     </div>
 
     <script>
+      // --- Shuffle cards so no two adjacent share a type ---
+      function shuffleFeed() {
+        const feed = document.getElementById('feed')!;
+        const cards = [...feed.querySelectorAll('.card')] as HTMLElement[];
+
+        // Fisher-Yates shuffle
+        for (let i = cards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+
+        // Fix adjacent same-type collisions
+        for (let i = 1; i < cards.length; i++) {
+          const prevType = cards[i - 1].className;
+          const currType = cards[i].className;
+          if (getCardType(prevType) === getCardType(currType)) {
+            // Find the nearest card with a different type and swap
+            for (let j = i + 1; j < cards.length; j++) {
+              if (getCardType(cards[j].className) !== getCardType(prevType)) {
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+                break;
+              }
+            }
+          }
+        }
+
+        // Re-append in new order and update data-index
+        cards.forEach((card, i) => {
+          card.dataset.index = String(i);
+          feed.appendChild(card);
+        });
+      }
+
+      function getCardType(className: string): string {
+        if (className.includes('card-podcast')) return 'podcast';
+        if (className.includes('card-person')) return 'person';
+        if (className.includes('card-video')) return 'video';
+        if (className.includes('card-photo')) return 'photo';
+        if (className.includes('card-text')) return 'text';
+        if (className.includes('card-compare')) return 'before-after';
+        return 'unknown';
+      }
+
+      shuffleFeed();
+
+      // Mark the first card as visible after shuffle
       const feed = document.getElementById('feed')!;
-      const dots = document.querySelectorAll('.progress-dot');
       const cards = document.querySelectorAll('.card');
+      cards.forEach((c, i) => c.classList.toggle('visible', i === 0));
       const scrollHint = document.getElementById('scroll-hint');
+
+      // Rebuild progress dots to match shuffled count
+      const progressContainer = document.getElementById('progress')!;
+      progressContainer.innerHTML = '';
+      cards.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        dot.dataset.index = String(i);
+        progressContainer.appendChild(dot);
+      });
+      const dots = document.querySelectorAll('.progress-dot');
 
       // --- Intersection Observer for card visibility + video autoplay ---
       const observer = new IntersectionObserver((entries) => {
@@ -604,6 +895,47 @@ const feedItems = [
           const showing = card.classList.toggle('show-after');
           badge.textContent = showing ? 'After' : 'Before';
           if (hint) hint.style.display = 'none';
+        });
+      });
+
+      // --- Person card: swipe left/right to cycle media ---
+      document.querySelectorAll('.card-person').forEach(card => {
+        const slides = card.querySelectorAll('.person-slide');
+        const dots = card.querySelectorAll('.person-dot');
+        if (slides.length <= 1) return;
+
+        let current = 0;
+
+        function showSlide(index: number) {
+          // Pause any playing video in current slide
+          const currentVideo = slides[current].querySelector('video');
+          if (currentVideo) currentVideo.pause();
+
+          current = index;
+          slides.forEach((s, i) => s.classList.toggle('active', i === current));
+          dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+          // Play video in new slide if it's a video
+          const newVideo = slides[current].querySelector('video') as HTMLVideoElement;
+          if (newVideo) {
+            newVideo.currentTime = 0;
+            newVideo.play().catch(() => {});
+          }
+        }
+
+        const leftBtn = card.querySelector('.swipe-left');
+        const rightBtn = card.querySelector('.swipe-right');
+
+        leftBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          card.classList.add('swiped');
+          showSlide((current - 1 + slides.length) % slides.length);
+        });
+
+        rightBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          card.classList.add('swiped');
+          showSlide((current + 1) % slides.length);
         });
       });
 
