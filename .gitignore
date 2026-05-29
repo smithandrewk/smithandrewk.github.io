@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Orbit: keep heavy iPhone video originals out of the repo (transcoded .mp4 are committed)
+public/media/orbit/**/*.mov
+public/media/orbit/**/*.MOV

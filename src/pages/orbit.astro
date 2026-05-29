@@ -1,0 +1,933 @@
+---
+import fs from 'node:fs';
+import Layout from '../layouts/Layout.astro';
+
+/* ============================================================================
+   THE GRAVITY OF OLD FRIENDS — a scroll-driven exhibit
+   ----------------------------------------------------------------------------
+   HOW TO BACKFILL THE YEAR:
+   Everything below is driven by two arrays: CITIES and meetups.
+   • To add a reunion, add an object to `meetups`. Reference a city by name.
+   • If the city isn't in CITIES yet, add it with its { lat, lon } — the map
+     projection handles the rest automatically (works for anywhere in/near SC).
+   • Mark the real ones; the entries flagged `sample: true` are placeholders
+     using photos already in /media/gallery so the page looks alive. Replace
+     them as you remember the actual nights.
+   HOME BASE is Columbia — change HOME below if that's wrong.
+   ========================================================================== */
+
+const HOME = "Columbia";
+const TODAY = "2026-05-29";
+
+// --- South Carolina map (real geometry, simplified from US Census GeoJSON) ---
+const SC = {
+  viewBox: "0 0 1000 792.7",
+  // bounding box used for the linear lat/lon -> svg projection
+  bbox: { minlon: -83.352485, maxlon: -78.541087, minlat: 32.0346, maxlat: 35.210542, W: 1000, H: 792.7, PAD: 24 },
+  path: "M248.8,27.4 L480.9,38.6 L483.0,47.8 L479.2,50.8 L478.0,56.2 L481.3,62.9 L502.3,48.2 L532.6,88.4 L529.7,114.3 L533.5,115.6 L749.1,119.1 L759.7,127.1 L814.3,180.0 L976.0,342.8 L967.3,344.4 L941.8,354.7 L922.2,368.0 L897.5,392.3 L883.7,409.5 L879.6,417.3 L868.5,428.9 L858.4,447.6 L849.5,482.7 L851.1,493.9 L848.0,501.6 L836.5,513.1 L819.9,521.2 L814.0,540.8 L805.3,541.4 L801.4,538.8 L789.5,542.0 L784.9,534.6 L781.8,534.0 L774.9,537.3 L770.3,540.8 L763.0,553.4 L765.3,559.7 L771.9,557.8 L771.2,564.3 L760.3,568.5 L747.7,577.4 L742.8,583.2 L743.4,586.0 L741.5,587.8 L724.7,594.6 L718.9,599.4 L713.7,599.2 L713.0,606.2 L709.5,613.8 L710.1,616.3 L692.2,626.9 L687.5,633.3 L672.1,635.3 L663.3,638.3 L658.0,641.2 L653.3,648.8 L646.7,646.6 L621.6,664.7 L619.3,661.7 L615.3,660.5 L609.7,665.4 L605.5,666.5 L603.5,660.0 L600.4,658.8 L593.9,660.3 L591.4,668.7 L592.3,672.0 L594.8,677.1 L599.1,677.5 L602.3,682.6 L597.3,700.3 L579.4,710.7 L569.3,712.7 L557.0,718.5 L554.9,726.0 L544.6,739.2 L526.6,751.1 L522.8,750.4 L517.4,753.5 L508.2,764.6 L512.1,768.7 L477.2,756.2 L466.3,749.2 L464.1,712.0 L465.7,709.8 L465.3,705.2 L462.9,696.7 L456.2,690.4 L450.1,667.2 L435.0,650.3 L420.6,643.3 L412.4,637.2 L406.6,629.2 L409.3,601.7 L405.6,586.8 L390.6,550.8 L392.2,542.7 L391.2,539.9 L366.7,520.0 L351.6,515.0 L320.9,484.3 L310.9,464.7 L308.9,446.5 L298.1,429.6 L282.4,410.1 L272.1,404.8 L264.9,403.7 L252.7,394.5 L242.6,365.9 L232.0,354.3 L211.7,339.4 L206.7,339.3 L179.9,318.2 L164.8,287.1 L157.6,277.0 L149.6,272.6 L144.8,258.6 L142.2,243.1 L118.7,197.3 L113.0,193.9 L97.8,194.7 L94.7,196.6 L86.9,194.5 L76.5,186.9 L60.1,168.9 L60.6,167.1 L46.1,161.5 L36.0,154.6 L24.2,143.3 L29.6,122.9 L40.9,112.6 L45.7,102.0 L65.4,91.0 L72.3,73.2 L137.1,53.5 L136.9,57.7 L140.3,57.4 L155.8,44.8 L176.8,40.1 L215.6,24.0 L248.8,27.4 Z",
+};
+
+// linear projection (lon/lat -> svg point). Derived from the bbox above.
+function project(lon: number, lat: number) {
+  const { minlon, maxlon, minlat, maxlat, W, H, PAD } = SC.bbox;
+  return {
+    x: PAD + ((lon - minlon) / (maxlon - minlon)) * (W - 2 * PAD),
+    y: PAD + ((maxlat - lat) / (maxlat - minlat)) * (H - 2 * PAD),
+  };
+}
+
+// --- Cities. Add { lat, lon } for any new place; x/y is computed. ----------
+const CITIES: Record<string, { lat: number; lon: number }> = {
+  Columbia:       { lat: 34.001, lon: -81.035 },
+  Charleston:     { lat: 32.776, lon: -79.931 },
+  Greenville:     { lat: 34.852, lon: -82.394 },
+  Clemson:        { lat: 34.683, lon: -82.837 },
+  Charlotte:      { lat: 35.227, lon: -80.843 },
+  "Myrtle Beach": { lat: 33.689, lon: -78.886 },
+  Beaufort:       { lat: 32.432, lon: -80.668 },
+  Spartanburg:    { lat: 34.949, lon: -81.932 },
+  "Hilton Head":  { lat: 32.216, lon: -80.752 },
+  Savannah:       { lat: 32.083, lon: -81.099 },
+};
+
+// --- THE REUNIONS. This is the whole exhibit. -------------------------------
+// date: ISO. city: must exist in CITIES. photos: paths under /public.
+// `friend` may be one name or several (a group reunion credits everyone there).
+const meetups = [
+  // Pulled from Google Calendar (2026 year-to-date) + Andrew's notes. Notes are
+  // first drafts — edit freely, and drop photo paths into `photos` as you find them.
+  {
+    date: "2026-05-29", friend: "Zenas", city: "Charleston", tonight: true,
+    title: "A gig in Charleston",
+    note: "Driving down to play keys with Zenas tonight. Two hours each way for a couple of hours on stage — and worth every mile.",
+    photos: ["/media/gallery/museum_gig.jpg", "/media/gallery/zenas_mountain.JPG"],
+  },
+  {
+    date: "2026-05-19", friend: "Drew", city: "Greenville",
+    title: "A full day with Drew",
+    note: "True South in Greenville that morning, then Halls with Drew and Max that night. A whole day, start to finish.",
+    photos: [],
+  },
+  {
+    date: "2026-05-12", friend: "Drew", city: "Greenville",
+    title: "Another Greenville run",
+    note: "Up to see Drew again. The drive's getting familiar — that's a good problem to have.",
+    photos: [],
+  },
+  {
+    date: "2026-05-10", friend: ["Devin", "Alvin"], city: "Charleston",
+    title: "ShareHouse, Charleston",
+    note: "Playing the ShareHouse in Charleston with Devin and Alvin — music's the best excuse to get the crew back in one room.",
+    photos: [],
+  },
+  {
+    date: "2026-05-06", friend: "Drew", city: "Greenville",
+    title: "Up for work, dinner with Drew",
+    note: "An overnight work trip to the upstate — which, with Drew up there, always turns into dinner and catching up too.",
+    photos: [],
+  },
+  {
+    date: "2026-04-24", friend: ["Zenas", "Griffin"], city: "Charleston",
+    title: "Pasta night in Charleston",
+    note: "Then all the way south that same night — pasta night with Zenas and Griffin, plus a gig. One of those days that just didn't end.",
+    photos: [],
+  },
+  {
+    date: "2026-04-24", friend: "Drew", city: "Greenville",
+    title: "Morning with Drew",
+    note: "Started the day with Drew up in Greenville before pointing the car south.",
+    photos: [],
+  },
+  {
+    date: "2026-04-17", friend: ["Ben", "Rylee", "Graham"], city: "Hilton Head",
+    title: "Heritage on Hilton Head",
+    note: "The whole crew on the coast for the Heritage — Ben, Rylee, and Graham. The kind of weekend you plan the rest of the year around.",
+    photos: [],
+  },
+  {
+    date: "2026-04-11", friend: "Kevin", city: "Charlotte",
+    title: "Lilly & Palmer's wedding",
+    note: "Back up to Charlotte for Lilly and Palmer's wedding, with Kev. Any excuse to be in the same room.",
+    photos: [],
+  },
+  {
+    date: "2026-03-28", friend: ["Drew", "Ben", "Rylee", "Graham", "Taylor"], city: "Greenville",
+    title: "Halls with the crew",
+    note: "Coffee with Taylor first, then dinner at Halls Chophouse with the Conquer Nations crew — Drew, Ben, Rylee, and Graham. Everyone in one place for a night.",
+    photos: [],
+  },
+  {
+    date: "2026-03-06", friend: "Justin", city: "Savannah",
+    title: "Savannah, with Justin",
+    note: "A road trip across the Georgia line to play a show with Justin. Four hours each way, no regrets.",
+    photos: [],
+  },
+  {
+    date: "2026-02-23", friend: "Drew", city: "Columbia",
+    title: "Drew's birthday",
+    note: "Birthday lunch with Drew, right here in town. The easy ones count too.",
+    photos: [],
+  },
+  {
+    date: "2026-02-16", friend: "Ben", city: "Columbia",
+    title: "Dinner with Ben",
+    note: "No driving, no planning — just dinner with Ben. A reminder that some of them never left.",
+    photos: [],
+  },
+  {
+    date: "2026-02-08", friend: "Kevin", city: "Charlotte",
+    title: "Lunch with Kev",
+    note: "Drove up to Charlotte for lunch with Kev at Yafo. A round trip for a couple of hours at the table.",
+    photos: [],
+  },
+  {
+    date: "2026-01-30", friend: ["Drew", "Ben", "Rylee", "Graham"], city: "Greenville",
+    title: "A snow-day weekend with the crew",
+    note: "A whole weekend in Greenville with the Conquer Nations crew — poker Friday night, then a surprise snow day: Waffle House, steaks, and nowhere to be. South Carolina barely gets these.",
+    photos: [],
+  },
+  {
+    date: "2026-01-09", friend: ["Drew", "Lake"], city: "Greenville",
+    title: "Greenville with Drew & Lake",
+    note: "The first road trip of the year — up to Greenville to see Drew and Lake.",
+    photos: [],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// DERIVED DATA (built at build time)
+// ---------------------------------------------------------------------------
+type City = keyof typeof CITIES;
+
+function pt(city: string) {
+  const c = CITIES[city];
+  return c ? project(c.lon, c.lat) : null;
+}
+
+// a reunion can name one friend or several
+function friendsOf(m: { friend: string | string[] }): string[] {
+  return Array.isArray(m.friend) ? m.friend : [m.friend];
+}
+function friendLabel(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return names.slice(0, -1).join(", ") + " & " + names[names.length - 1];
+}
+
+// Auto-load photos: each reunion has a folder at public/media/orbit/<slug>/.
+// Drop any images in (any names), rebuild, and they appear on that card.
+// A non-empty folder overrides the `photos` listed above.
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+function slugOf(m: { date: string; friend: string | string[]; city: string }): string {
+  return slugify(`${m.date.slice(5)}-${friendsOf(m).join("-")}-${m.city}`);
+}
+const IMG_RE = /\.(jpe?g|png|webp|avif)$/i;
+const VID_RE = /\.(mp4|webm|m4v)$/i; // raw .mov is ignored — transcode to .mp4 first
+function mediaFor(slug: string, fallback: string[]) {
+  try {
+    const files = fs.readdirSync(`public/media/orbit/${slug}`)
+      .filter(f => !f.startsWith(".") && (IMG_RE.test(f) || VID_RE.test(f)))
+      .sort();
+    if (files.length) return files.map(f => ({
+      src: `/media/orbit/${slug}/${f}`,
+      type: VID_RE.test(f) ? "video" : "image",
+    }));
+  } catch { /* folder absent or empty — fall back */ }
+  return fallback.map(s => ({ src: s, type: "image" }));
+}
+// resolve each reunion's media (images + transcoded videos) from its folder
+for (const m of meetups) (m as any).photos = mediaFor(slugOf(m), m.photos);
+
+// haversine miles between two cities
+function miles(a: string, b: string) {
+  const ca = CITIES[a], cb = CITIES[b];
+  if (!ca || !cb) return 0;
+  const R = 3958.8, toR = Math.PI / 180;
+  const dLat = (cb.lat - ca.lat) * toR, dLon = (cb.lon - ca.lon) * toR;
+  const s = Math.sin(dLat / 2) ** 2 +
+    Math.cos(ca.lat * toR) * Math.cos(cb.lat * toR) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+const sorted = [...meetups].sort((a, b) => b.date.localeCompare(a.date));
+
+// stats
+const totalReunions = meetups.length;
+const friendsList = [...new Set(meetups.flatMap(friendsOf))];
+const citiesVisited = [...new Set(meetups.map(m => m.city).filter(c => c !== HOME))];
+const totalMiles = Math.round(
+  meetups.reduce((sum, m) => sum + (m.city === HOME ? 0 : miles(HOME, m.city)) * 2, 0)
+);
+
+// weeks between reunions across the span so far
+const dates = meetups.map(m => +new Date(m.date)).sort((a, b) => a - b);
+const spanDays = (dates[dates.length - 1] - dates[0]) / 86400000;
+const weeksBetween = totalReunions > 1
+  ? (spanDays / (totalReunions - 1) / 7).toFixed(1)
+  : "—";
+
+// per-month tally (Jan..Dec of TODAY's year)
+const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const thisYear = TODAY.slice(0, 4);
+const todayMonth = parseInt(TODAY.slice(5, 7), 10) - 1;
+const monthTally = months.map((label, i) => ({
+  label,
+  index: i,
+  current: i === todayMonth,
+  future: i > todayMonth,
+  reunions: meetups.filter(m => m.date.slice(0, 4) === thisYear && parseInt(m.date.slice(5, 7), 10) - 1 === i),
+}));
+const maxMonth = Math.max(1, ...monthTally.map(m => m.reunions.length));
+
+// per-friend frequency
+const friendFreq = friendsList
+  .map(f => ({ friend: f, count: meetups.filter(m => friendsOf(m).includes(f)).length }))
+  .sort((a, b) => b.count - a.count);
+const maxFriend = Math.max(1, ...friendFreq.map(f => f.count));
+
+// ---- map narrative beats (drives the pinned scrollytelling) ----------------
+// One beat per stop. The first is home; the rest each draw a red arc.
+const beatCities = [HOME, ...citiesVisited
+  .sort((a, b) => miles(HOME, a) - miles(HOME, b))]; // nearest first
+
+const beatCopy: Record<string, string> = {
+  Columbia: "Home base. Where the group chat still says 'we should all get dinner soon.'",
+  Charlotte: "Just over the state line. Ninety minutes that somehow became a 'someday.'",
+  Greenville: "Up in the foothills now. Close enough to drive, far enough to need a plan.",
+  Clemson: "A standing invitation to meet halfway and hike it like we used to.",
+  Charleston: "Two hours south, on the water. Where Zenas plays, and where I'm headed tonight.",
+  Beaufort: "All the way to the low country — for no reason other than to see each other.",
+  Spartanburg: "Off the interstate, easy to drive past, hard to actually stop in.",
+  "Myrtle Beach": "The annual one. The whole crew, one stretch of coast, once a year if we're lucky.",
+  "Hilton Head": "Far enough south it's basically a vacation to say hello.",
+  Savannah: "Across the Georgia line. Four hours south to play a room with an old friend.",
+};
+
+const home = pt(HOME)!;
+function arcPath(city: string) {
+  const a = home, b = pt(city);
+  if (!b) return "";
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const bow = Math.min(140, len * 0.22);
+  const cx = mx + (-dy / len) * bow;
+  const cy = my + (dx / len) * bow;
+  return `M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}`;
+}
+
+const beats = beatCities.map((city, i) => {
+  const cityMeets = meetups
+    .filter(m => m.city === city)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(m => ({
+      dateShort: new Date(m.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      title: m.title,
+    }));
+  // up to 3 photos from this city's reunions, to fly in over the map
+  const cityPhotos = meetups
+    .filter(m => m.city === city)
+    .flatMap(m => m.photos)
+    .slice(0, 3);
+  const p = pt(city)!;
+  return {
+    city, index: i, isHome: city === HOME,
+    copy: beatCopy[city] ?? "",
+    reunionCount: cityMeets.length,
+    events: cityMeets,
+    photos: cityPhotos,
+    miles: city === HOME ? 0 : Math.round(miles(HOME, city)),
+    arc: city === HOME ? "" : arcPath(city),
+    x: p.x, y: p.y,
+  };
+});
+---
+
+<Layout
+  title="The Gravity of Old Friends"
+  description="An exhibit on distance, old friends, and the times we still manage to land in the same place. South Carolina, 2026."
+>
+  <article class="orbit">
+
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <svg class="hero-map" viewBox={SC.viewBox} aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+        <path d={SC.path} />
+      </svg>
+      <div class="hero-grain" aria-hidden="true"></div>
+
+      <div class="hero-inner">
+        <p class="eyebrow reveal">An Exhibit · South Carolina · 2026</p>
+        <h1 class="hero-title">
+          <span class="reveal" style="--d:.05s">The Gravity</span>
+          <span class="reveal" style="--d:.15s">of Old</span>
+          <span class="reveal hero-accent" style="--d:.25s">Friends</span>
+        </h1>
+        <p class="hero-dek reveal" style="--d:.4s">
+          As we get older, the people we love most scatter across the map. This is a
+          record of the times we still managed to land in the same place.
+        </p>
+
+        <dl class="hero-stats reveal" style="--d:.55s">
+          <div><dt>{totalReunions}</dt><dd>reunions</dd></div>
+          <div><dt>{citiesVisited.length}</dt><dd>cities</dd></div>
+          <div><dt>{friendsList.length}</dt><dd>friends</dd></div>
+          <div><dt>{totalMiles.toLocaleString()}</dt><dd>miles between us</dd></div>
+        </dl>
+
+        <div class="scroll-cue reveal" style="--d:.8s" aria-hidden="true">
+          <span>Scroll</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l6-6m-6 6l-6-6"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PREMISE ================= -->
+    <section class="premise">
+      <div class="premise-inner">
+        <p class="eyebrow on-scroll">The premise</p>
+        <p class="lead on-scroll">
+          You don't notice it happening. One by one, the people who used to be a
+          five-minute drive away become a text that says <em>"next time you're in town."</em>
+        </p>
+        <blockquote class="pull on-scroll">
+          Nobody moves away all at once. The map just quietly stretches until seeing
+          a best friend takes a tank of gas and a free weekend.
+        </blockquote>
+        <p class="body on-scroll">
+          So I started keeping track. Not of everyone — of the few that matter most, and
+          the distance it now takes to close. Every dot on the map that follows took a plan,
+          a drive, or a flight. None of them just happened. That's the whole point.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= THE MAP (pinned scrollytelling) ================= -->
+    <section class="map-section">
+      <div class="map-intro">
+        <p class="eyebrow on-scroll">The map</p>
+        <h2 class="section-title on-scroll">Closing the distance</h2>
+      </div>
+
+      <div class="scrolly" id="scrolly">
+        <!-- sticky figure -->
+        <div class="map-sticky">
+         <div class="map-frame">
+          <svg class="sc-map" viewBox={SC.viewBox} preserveAspectRatio="xMidYMid meet" aria-label="Map of South Carolina with travel routes to friends">
+            <!-- state outline -->
+            <path class="sc-outline" d={SC.path} pathLength="1" />
+            <!-- arcs -->
+            <g class="arcs">
+              {beats.filter(b => !b.isHome).map(b => (
+                <path class="arc" data-city={b.city} d={b.arc} pathLength="1" fill="none" />
+              ))}
+            </g>
+            <!-- destination nodes -->
+            <g class="nodes">
+              {beats.filter(b => !b.isHome).map(b => (
+                <g class="node" data-city={b.city}>
+                  <circle class="node-halo" cx={b.x} cy={b.y} r="14" />
+                  <circle class="node-dot" cx={b.x} cy={b.y} r="5" />
+                  <text class="node-label" x={b.x} y={b.y - 16}>{b.city}</text>
+                </g>
+              ))}
+            </g>
+            <!-- home -->
+            <g class="home-node">
+              <circle class="home-pulse" cx={home.x} cy={home.y} r="9" />
+              <circle class="home-dot" cx={home.x} cy={home.y} r="6" />
+              <text class="home-label" x={home.x} y={home.y + 26}>{HOME} · home</text>
+            </g>
+          </svg>
+          <!-- memories that fly in over the map for the active city -->
+          <div class="fly-photos" aria-hidden="true">
+            {beats.filter(b => b.photos.length > 0).map(b => (
+              <div class="fly-group" data-city={b.city}>
+                {b.photos.map((item: any, i: number) => (
+                  item.type === "video" ? (
+                    <video class="fly-photo" style={`--slot:${i}`} src={item.src} autoplay muted loop playsinline></video>
+                  ) : (
+                    <img class="fly-photo" style={`--slot:${i}`} src={item.src} alt="" loading="lazy" />
+                  )
+                ))}
+              </div>
+            ))}
+          </div>
+         </div>
+        </div>
+
+        <!-- steps that scroll over the sticky map -->
+        <div class="steps">
+          {beats.map(b => (
+            <div class="step" data-index={b.index} data-city={b.city}>
+              <div class="step-card">
+                {b.isHome ? (
+                  <p class="step-kicker">You are here</p>
+                ) : (
+                  <p class="step-kicker">
+                    <span class="step-miles">{b.miles} mi</span>
+                    {b.reunionCount > 0 && <span class="step-count">{b.reunionCount}× this year</span>}
+                  </p>
+                )}
+                <h3 class="step-city">{b.city}</h3>
+                <p class="step-copy">{b.copy}</p>
+                {b.events.length > 0 && (
+                  <ul class="step-events">
+                    {b.events.map(e => (
+                      <li>
+                        <span class="se-date">{e.dateShort}</span>
+                        <span class="se-title">{e.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ))}
+          <!-- final beat: photos clear, the whole map zooms in -->
+          <div class="step step-reveal" data-index={beats.length}>
+            <div class="step-card reveal-card">
+              <p class="step-kicker">The whole year</p>
+              <h3 class="step-city">All of it.</h3>
+              <p class="step-copy">
+                {totalReunions} reunions · {citiesVisited.length} cities · {totalMiles.toLocaleString()} miles.
+                Every red line a plan, a drive, a reason to be in the same place.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= THE COUNT (charts) ================= -->
+    <section class="count">
+      <div class="count-inner">
+        <p class="eyebrow on-scroll">The count</p>
+        <h2 class="section-title on-scroll">How often, really</h2>
+        <p class="count-lead on-scroll">
+          On average, about <strong>{weeksBetween} weeks</strong> pass between
+          seeing one of my best friends. Here's how the year has actually gone.
+        </p>
+
+        <!-- monthly tally -->
+        <div class="chart on-scroll" data-chart>
+          <p class="chart-label">Reunions by month · {thisYear}</p>
+          <div class="months">
+            {monthTally.map(m => (
+              <div class:list={["month", { current: m.current, future: m.future }]}>
+                <div class="month-dots">
+                  {Array.from({ length: m.reunions.length }).map(() => (
+                    <span class="tally" style={`--h:${100 / maxMonth}%`}></span>
+                  ))}
+                </div>
+                <span class="month-label">{m.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- per-friend bars -->
+        <div class="chart on-scroll" data-chart>
+          <p class="chart-label">By friend</p>
+          <div class="bars">
+            {friendFreq.map(f => (
+              <div class="bar-row">
+                <span class="bar-name">{f.friend}</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style={`--w:${(f.count / maxFriend) * 100}%`}></div>
+                </div>
+                <span class="bar-count">{f.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= THE LOG ================= -->
+    <section class="log">
+      <div class="log-inner">
+        <p class="eyebrow on-scroll">The log</p>
+        <h2 class="section-title on-scroll">The year, in reunions</h2>
+
+        <div class="entries">
+          {sorted.map((m, i) => {
+            const cityMiles = m.city === HOME ? 0 : Math.round(miles(HOME, m.city));
+            const d = new Date(m.date + "T12:00:00");
+            const dateStr = d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+            return (
+              <article class:list={["entry", "on-scroll", { featured: m.tonight }]} data-i={i}>
+                <div class="entry-meta">
+                  {m.tonight && <span class="badge">Tonight</span>}
+                  <time class="entry-date">{dateStr}</time>
+                  <span class="entry-city">{m.city}{cityMiles ? ` · ${cityMiles} mi` : ""}</span>
+                </div>
+                <div class="entry-body">
+                  <h3 class="entry-title">{m.title}</h3>
+                  <p class="entry-friend">with {friendLabel(friendsOf(m))}</p>
+                  <p class="entry-note">{m.note}</p>
+                </div>
+                {m.photos.length > 0 && (
+                  <div class="entry-photos">
+                    {m.photos.map((item: any) => (
+                      <div class="photo-frame">
+                        {item.type === "video" ? (
+                          <video src={item.src} autoplay muted loop playsinline preload="metadata" onerror="this.closest('.photo-frame').style.display='none'"></video>
+                        ) : (
+                          <img src={item.src} alt={`${friendsOf(m)[0]} in ${m.city}`} loading="lazy" onerror="this.closest('.photo-frame').style.display='none'" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= OUTRO ================= -->
+    <section class="outro">
+      <div class="outro-inner">
+        <p class="outro-line on-scroll">
+          Every one of these took a plan, a drive, a flight, a reason.
+        </p>
+        <p class="outro-line big on-scroll" style="--d:.15s">
+          None of them just happened.
+        </p>
+        <p class="outro-foot on-scroll" style="--d:.3s">
+          {totalReunions} reunions · {totalMiles.toLocaleString()} miles · still in orbit.
+        </p>
+      </div>
+    </section>
+
+  </article>
+</Layout>
+
+<style>
+  /* ---------- shared ---------- */
+  .orbit { --red: #C8442E; --red-bright: #E8553B; --ink: #1A1512; }
+  .eyebrow {
+    font-family: var(--font-family-mono); font-size: .7rem; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--color-cognac); margin-bottom: 1.25rem;
+  }
+  .section-title {
+    font-family: var(--font-family-serif); font-weight: 600;
+    font-size: clamp(2rem, 7vw, 3.25rem); color: var(--color-walnut);
+    line-height: 1.05; letter-spacing: -.01em;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative; min-height: 100svh; display: flex; align-items: center;
+    background: radial-gradient(120% 90% at 70% 10%, #2A2018 0%, #1A1512 55%, #110D0A 100%);
+    color: #F0EBE3; overflow: hidden; isolation: isolate;
+  }
+  .hero-map {
+    position: absolute; inset: auto -18% -28% auto; width: 95%; max-width: 900px;
+    opacity: .07; z-index: 0; transform: rotate(-4deg);
+  }
+  .hero-map path { fill: none; stroke: var(--red-bright); stroke-width: 2; }
+  .hero-grain {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  .hero-inner {
+    position: relative; z-index: 2; max-width: 56rem; margin: 0 auto;
+    padding: 6rem 1.5rem 5rem; width: 100%;
+  }
+  .hero .eyebrow { color: var(--red-bright); }
+  .hero-title {
+    font-family: var(--font-family-serif); font-weight: 600; color: #FAF7F2;
+    font-size: clamp(3rem, 14vw, 7rem); line-height: .92; letter-spacing: -.02em;
+    margin: 0 0 1.75rem;
+  }
+  .hero-title span { display: block; }
+  .hero-accent { font-style: italic; color: var(--red-bright); }
+  .hero-dek {
+    font-size: clamp(1.05rem, 2.6vw, 1.35rem); line-height: 1.55;
+    color: #D8CEC2; max-width: 38ch; margin-bottom: 2.75rem;
+  }
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem 2rem;
+    max-width: 30rem; margin: 0;
+  }
+  .hero-stats div { border-top: 1px solid rgba(232,85,59,.35); padding-top: .6rem; }
+  .hero-stats dt {
+    font-family: var(--font-family-serif); font-size: clamp(1.8rem, 6vw, 2.6rem);
+    color: #FAF7F2; line-height: 1;
+  }
+  .hero-stats dd {
+    font-family: var(--font-family-mono); font-size: .68rem; letter-spacing: .14em;
+    text-transform: uppercase; color: #A89C8E; margin: .4rem 0 0;
+  }
+  .scroll-cue {
+    margin-top: 3.5rem; display: flex; flex-direction: column; align-items: center;
+    gap: .5rem; color: #8A7E70; font-family: var(--font-family-mono);
+    font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;
+  }
+  .scroll-cue svg { width: 1.1rem; height: 1.1rem; animation: bob 2s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+  @media (min-width: 640px) { .hero-stats { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ---------- PREMISE ---------- */
+  .premise { background: var(--color-cream); padding: clamp(5rem, 14vw, 9rem) 1.5rem; }
+  .premise-inner { max-width: 40rem; margin: 0 auto; }
+  .lead {
+    font-family: var(--font-family-serif); font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+    line-height: 1.35; color: var(--color-walnut); margin: 0 0 2rem;
+  }
+  .lead em { color: var(--red); font-style: italic; }
+  .pull {
+    border: none; margin: 2.5rem 0; padding: 0 0 0 1.5rem;
+    border-left: 3px solid var(--red); font-family: var(--font-family-serif);
+    font-style: italic; font-size: clamp(1.15rem, 3vw, 1.5rem); line-height: 1.4;
+    color: var(--color-charcoal);
+  }
+  .body { color: var(--color-warm-gray); font-size: 1.05rem; line-height: 1.7; }
+
+  /* ---------- MAP SCROLLYTELLING ---------- */
+  .map-section { background: var(--color-linen); padding-top: clamp(4rem, 10vw, 7rem); }
+  .map-intro { max-width: 40rem; margin: 0 auto 1rem; padding: 0 1.5rem; }
+  .scrolly { position: relative; }
+  .map-sticky {
+    position: sticky; top: 56px; height: 100svh; display: flex;
+    align-items: center; justify-content: center; padding: 1rem 1rem 44svh; z-index: 0;
+  }
+  .map-frame { position: relative; width: 100%; max-width: 560px; line-height: 0; }
+  .sc-map { width: 100%; height: auto; display: block; overflow: visible; transition: transform 1s cubic-bezier(.2, .7, .2, 1); }
+  .sc-map.map-zoom { transform: scale(1.07); }
+  .reveal-card { text-align: center; }
+  .reveal-card .step-city { font-style: italic; }
+
+  /* memories that fly in over the map */
+  .fly-photos { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  .fly-group { position: absolute; inset: 0; }
+  .fly-photo {
+    position: absolute; width: clamp(76px, 21vw, 138px); aspect-ratio: 4 / 5;
+    object-fit: cover; background: #fff; border: 5px solid #fff; border-radius: 3px;
+    box-shadow: 0 14px 30px rgba(26, 21, 18, 0.30);
+    opacity: 0; transform: translate(var(--fx, 0), var(--fy, 32px)) rotate(var(--rot, 0deg)) scale(.92);
+    transition: opacity .6s ease, transform .8s cubic-bezier(.18, .8, .2, 1);
+    transition-delay: calc(var(--slot, 0) * .12s);
+    will-change: transform, opacity;
+  }
+  .fly-group.active .fly-photo { opacity: 1; transform: translate(0, 0) rotate(var(--rot, 0deg)) scale(1); }
+  /* mobile: 2 photos tucked into the top corners, fully on-screen, leaving the
+     lower map visible. The final reveal beat shows the whole map photo-free. */
+  .fly-photo:nth-child(1) { top: 0%;  left: 1%;  right: auto; --rot: -5deg; --fx: -34px; --fy: -14px; }
+  .fly-photo:nth-child(2) { top: -3%; right: 1%; left: auto;  --rot:  5deg; --fx:  34px; --fy: -18px; }
+  .fly-photo:nth-child(3) { display: none; }
+
+  .sc-outline {
+    fill: rgba(92,64,51,.05); stroke: var(--color-walnut); stroke-width: 1.5;
+    stroke-opacity: .35; stroke-dasharray: 1; stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1.6s ease;
+  }
+  .map-drawn .sc-outline { stroke-dashoffset: 0; }
+
+  .arc {
+    stroke: var(--red); stroke-width: 2.5; stroke-linecap: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0;
+    filter: drop-shadow(0 0 5px rgba(200,68,46,.5));
+    transition: stroke-dashoffset 1s ease, opacity .5s ease;
+  }
+  .arc.drawn { stroke-dashoffset: 0; opacity: 1; }
+
+  .node { opacity: 0; transition: opacity .5s ease; }
+  .node.shown { opacity: 1; }
+  .node-halo { fill: var(--red); opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .node.active .node-halo { animation: ping 1.6s ease-out infinite; }
+  .node-dot { fill: var(--red); }
+  .node.active .node-dot { fill: var(--red-bright); }
+  .node-label {
+    font-family: var(--font-family-mono); font-size: 15px; font-weight: 500;
+    fill: var(--color-walnut); text-anchor: middle; opacity: .7;
+  }
+  .node.active .node-label { fill: var(--red); opacity: 1; font-weight: 700; }
+  @keyframes ping { 0% { opacity: .35; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
+
+  .home-dot { fill: var(--color-walnut); }
+  .home-pulse { fill: var(--color-walnut); opacity: .25; transform-box: fill-box; transform-origin: center; animation: ping 2.4s ease-out infinite; }
+  .home-label {
+    font-family: var(--font-family-mono); font-size: 14px; letter-spacing: .08em;
+    fill: var(--color-walnut); text-anchor: middle; font-weight: 500;
+  }
+
+  .steps { position: relative; margin-top: -100svh; z-index: 1; }
+  .step {
+    min-height: 100svh; display: flex; align-items: flex-end;
+    justify-content: center; padding: 0 1.25rem 5svh; pointer-events: none;
+  }
+  .step-card {
+    pointer-events: auto; background: var(--color-cream);
+    border: 1px solid rgba(92,64,51,.12); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); padding: 1.4rem 1.6rem; max-width: 26rem; width: 100%;
+    opacity: .35; transform: translateY(14px) scale(.99);
+    transition: opacity .4s ease, transform .4s ease; backdrop-filter: blur(2px);
+  }
+  .step.is-active .step-card { opacity: 1; transform: none; }
+  .step-kicker {
+    display: flex; gap: .6rem; align-items: center; font-family: var(--font-family-mono);
+    font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--color-warm-gray); margin-bottom: .5rem;
+  }
+  .step-miles { color: var(--red); font-weight: 700; }
+  .step-count {
+    background: rgba(200,68,46,.1); color: var(--red); padding: .1rem .5rem;
+    border-radius: 999px; letter-spacing: .06em;
+  }
+  .step-city {
+    font-family: var(--font-family-serif); font-size: 1.7rem;
+    color: var(--color-walnut); margin: 0 0 .5rem; line-height: 1.1;
+  }
+  .step-copy { color: var(--color-warm-gray); line-height: 1.55; margin: 0; font-size: 1rem; }
+  .step-events {
+    list-style: none; margin: 1rem 0 0; padding: .9rem 0 0; display: flex;
+    flex-direction: column; gap: .55rem; border-top: 1px solid rgba(92,64,51,.12);
+  }
+  .step-events li { display: flex; gap: .7rem; align-items: baseline; }
+  .se-date {
+    flex: none; width: 3.4rem; font-family: var(--font-family-mono); font-size: .68rem;
+    letter-spacing: .04em; text-transform: uppercase; color: var(--red); padding-top: .05rem;
+  }
+  .se-title {
+    font-family: var(--font-family-serif); font-size: .95rem; line-height: 1.3;
+    color: var(--color-walnut);
+  }
+
+  @media (min-width: 900px) {
+    .map-sticky { align-items: center; justify-content: flex-start; padding: 1rem 0 1rem 4vw; }
+    .map-frame { max-width: 54vw; }
+    .step { justify-content: flex-end; align-items: center; padding: 0 5vw 0 0; }
+    .step-card { margin-right: 2vw; }
+    /* desktop has room: bring back the fuller 3-photo scatter around the map */
+    .fly-photo { width: clamp(118px, 13vw, 178px); }
+    .fly-photo:nth-child(1) { top: 3%;  left: -8%;  right: auto; --rot: -6deg; --fx: -54px; --fy: -8px; }
+    .fly-photo:nth-child(2) { top: -4%; right: -7%; left: auto;  --rot:  5deg; --fx:  54px; --fy: -28px; }
+    .fly-photo:nth-child(3) { display: block; top: auto; bottom: 1%; right: 1%; left: auto; --rot: -4deg; --fx: 30px; --fy: 48px; }
+  }
+
+  /* ---------- THE COUNT ---------- */
+  .count { background: var(--color-cream); padding: clamp(5rem, 13vw, 8rem) 1.5rem; }
+  .count-inner { max-width: 44rem; margin: 0 auto; }
+  .count-lead {
+    color: var(--color-warm-gray); font-size: 1.1rem; line-height: 1.6;
+    margin: 1rem 0 3rem; max-width: 34ch;
+  }
+  .count-lead strong { color: var(--red); }
+  .chart { margin-bottom: 3.5rem; }
+  .chart-label {
+    font-family: var(--font-family-mono); font-size: .7rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--color-warm-gray); margin-bottom: 1.25rem;
+  }
+  /* months */
+  .months { display: grid; grid-template-columns: repeat(12, 1fr); gap: .35rem; align-items: end; height: 180px; }
+  .month { display: flex; flex-direction: column; align-items: center; gap: .5rem; height: 100%; justify-content: flex-end; }
+  .month-dots { display: flex; flex-direction: column-reverse; gap: 4px; flex: 1; justify-content: flex-end; width: 100%; align-items: center; }
+  .tally {
+    width: 70%; max-width: 22px; min-height: 8px; height: var(--h); border-radius: 3px;
+    background: var(--color-walnut); opacity: .8; transform: scaleY(0);
+    transform-origin: bottom; transition: transform .5s ease;
+  }
+  [data-chart].in .tally { transform: scaleY(1); }
+  .month.current .tally { background: var(--red); opacity: 1; box-shadow: 0 0 10px rgba(200,68,46,.4); }
+  .month-label {
+    font-family: var(--font-family-mono); font-size: .6rem; letter-spacing: .04em;
+    color: var(--color-warm-gray-light); text-transform: uppercase;
+  }
+  .month.current .month-label { color: var(--red); font-weight: 700; }
+  .month.future { opacity: .4; }
+  /* friend bars */
+  .bars { display: flex; flex-direction: column; gap: .85rem; }
+  .bar-row { display: grid; grid-template-columns: 5.5rem 1fr 1.5rem; gap: .75rem; align-items: center; }
+  .bar-name { font-family: var(--font-family-serif); color: var(--color-walnut); font-size: 1rem; }
+  .bar-track { height: 12px; background: rgba(92,64,51,.08); border-radius: 999px; overflow: hidden; }
+  .bar-fill {
+    height: 100%; width: 0; border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-walnut), var(--red));
+    transition: width .9s cubic-bezier(.2,.7,.2,1);
+  }
+  [data-chart].in .bar-fill { width: var(--w); }
+  .bar-count { font-family: var(--font-family-mono); font-size: .85rem; color: var(--color-warm-gray); text-align: right; }
+
+  /* ---------- THE LOG ---------- */
+  .log { background: var(--color-linen); padding: clamp(5rem, 13vw, 8rem) 1.5rem; }
+  .log-inner { max-width: 46rem; margin: 0 auto; }
+  .entries { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
+  .entry {
+    background: var(--color-cream); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md); padding: 1.5rem; border: 1px solid transparent;
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .entry:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .entry.featured { border-color: var(--red); box-shadow: 0 0 0 1px var(--red), var(--shadow-lg); }
+  .entry-meta {
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+    font-family: var(--font-family-mono); font-size: .72rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--color-warm-gray); margin-bottom: .9rem;
+  }
+  .badge {
+    background: var(--red); color: #FAF7F2; padding: .2rem .6rem; border-radius: 999px;
+    font-weight: 700; letter-spacing: .12em; animation: glow 2.2s ease-in-out infinite;
+  }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(200,68,46,.5); } 50% { box-shadow: 0 0 0 6px rgba(200,68,46,0); } }
+  .entry-date { color: var(--color-walnut); font-weight: 500; }
+  .entry-city { color: var(--color-cognac); }
+  .entry-title { font-family: var(--font-family-serif); font-size: 1.45rem; color: var(--color-walnut); margin: 0 0 .25rem; line-height: 1.15; }
+  .entry-friend { font-family: var(--font-family-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--red); margin: 0 0 .75rem; }
+  .entry-note { color: var(--color-warm-gray); line-height: 1.6; margin: 0; }
+  .entry-photos {
+    margin-top: 1.25rem; display: grid; gap: .6rem;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .photo-frame { border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 4/3; }
+  .photo-frame img, .photo-frame video { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+  .entry:hover .photo-frame img, .entry:hover .photo-frame video { transform: scale(1.04); }
+
+  /* ---------- OUTRO ---------- */
+  .outro {
+    background: radial-gradient(120% 100% at 30% 0%, #2A2018 0%, #1A1512 60%, #110D0A 100%);
+    color: #F0EBE3; padding: clamp(6rem, 18vw, 11rem) 1.5rem; text-align: center;
+  }
+  .outro-inner { max-width: 40rem; margin: 0 auto; }
+  .outro-line {
+    font-family: var(--font-family-serif); font-size: clamp(1.4rem, 4vw, 2rem);
+    line-height: 1.35; color: #D8CEC2; margin: 0 0 .5rem;
+  }
+  .outro-line.big { font-size: clamp(2rem, 8vw, 3.5rem); color: #FAF7F2; font-style: italic; }
+  .outro-line.big::after { content: ""; display: block; width: 48px; height: 2px; background: var(--red-bright); margin: 1.75rem auto 0; }
+  .outro-foot {
+    font-family: var(--font-family-mono); font-size: .72rem; letter-spacing: .18em;
+    text-transform: uppercase; color: #8A7E70; margin-top: 2rem;
+  }
+
+  /* ---------- reveal animations ---------- */
+  .reveal { opacity: 0; transform: translateY(20px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: var(--d, 0s); }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .on-scroll { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; transition-delay: var(--d, 0s); }
+  .on-scroll.in { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .on-scroll { opacity: 1 !important; transform: none !important; animation: none !important; }
+    .arc, .sc-outline, .bar-fill, .tally, .fly-photo { transition: none !important; }
+    .scroll-cue svg, .home-pulse, .node.active .node-halo, .badge { animation: none !important; }
+  }
+</style>
+
+<script>
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.15, rootMargin: "0px 0px -8% 0px" });
+  document.querySelectorAll(".on-scroll, [data-chart]").forEach(el => io.observe(el));
+
+  // Map: draw state outline when in view
+  const mapEl = document.querySelector(".sc-map");
+  if (mapEl) {
+    const mio = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) mapEl.classList.add("map-drawn"); });
+    }, { threshold: 0.4 });
+    mio.observe(mapEl);
+  }
+
+  // Scrollytelling: activate steps, reveal arcs cumulatively
+  const steps = Array.from(document.querySelectorAll<HTMLElement>(".step"));
+  const arcs = new Map<string, Element>();
+  document.querySelectorAll<Element>(".arc").forEach(a => arcs.set(a.getAttribute("data-city")!, a));
+  const nodes = new Map<string, Element>();
+  document.querySelectorAll<Element>(".node").forEach(n => nodes.set(n.getAttribute("data-city")!, n));
+  const flyGroups = new Map<string, Element>();
+  document.querySelectorAll<Element>(".fly-group").forEach(g => flyGroups.set(g.getAttribute("data-city")!, g));
+
+  let activeIdx = -1;
+  function setActive(idx: number) {
+    if (idx === activeIdx) return;
+    activeIdx = idx;
+    steps.forEach((s, i) => s.classList.toggle("is-active", i === idx));
+    const activeCity = steps[idx]?.getAttribute("data-city");
+    // cumulative arc/node reveal up to current step
+    steps.forEach((s, i) => {
+      const city = s.getAttribute("data-city")!;
+      const arc = arcs.get(city), node = nodes.get(city);
+      const drawn = i <= idx;
+      arc?.classList.toggle("drawn", drawn);
+      node?.classList.toggle("shown", drawn);
+      node?.classList.toggle("active", i === idx);
+    });
+    // only the current city's memories fly in (none on the final reveal beat)
+    flyGroups.forEach((g, city) => g.classList.toggle("active", city === activeCity));
+    // final beat has no city: clear photos and zoom into the full map
+    const isReveal = !activeCity;
+    document.querySelector(".sc-map")?.classList.toggle("map-zoom", isReveal);
+  }
+
+  const sio = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) setActive(parseInt((e.target as HTMLElement).dataset.index || "0", 10));
+    });
+  }, { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+  steps.forEach(s => sio.observe(s));
+</script>
