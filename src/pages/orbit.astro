@@ -300,6 +300,9 @@ const beats = beatCities.map((city, i) => {
     miles: city === HOME ? 0 : Math.round(miles(HOME, city)),
     arc: city === HOME ? "" : arcPath(city),
     x: p.x, y: p.y,
+    // Savannah sits just below Hilton Head — drop its label beneath the dot so
+    // the two coastal labels don't collide. Everyone else sits above their dot.
+    labelDy: city === "Savannah" ? 38 : -20,
   };
 });
 ---
@@ -389,7 +392,7 @@ const beats = beatCities.map((city, i) => {
                 <g class="node" data-city={b.city}>
                   <circle class="node-halo" cx={b.x} cy={b.y} r="14" />
                   <circle class="node-dot" cx={b.x} cy={b.y} r="5" />
-                  <text class="node-label" x={b.x} y={b.y - 16}>{b.city}</text>
+                  <text class="node-label" x={b.x} y={b.y + b.labelDy}>{b.city}</text>
                 </g>
               ))}
             </g>
@@ -702,7 +705,7 @@ const beats = beatCities.map((city, i) => {
   .node-dot { fill: var(--red); }
   .node.active .node-dot { fill: var(--red-bright); }
   .node-label {
-    font-family: var(--font-family-mono); font-size: 15px; font-weight: 500;
+    font-family: var(--font-family-mono); font-size: 30px; font-weight: 500;
     fill: var(--color-walnut); text-anchor: middle; opacity: .7;
   }
   .node.active .node-label { fill: var(--red); opacity: 1; font-weight: 700; }
@@ -711,7 +714,7 @@ const beats = beatCities.map((city, i) => {
   .home-dot { fill: var(--color-walnut); }
   .home-pulse { fill: var(--color-walnut); opacity: .25; transform-box: fill-box; transform-origin: center; animation: ping 2.4s ease-out infinite; }
   .home-label {
-    font-family: var(--font-family-mono); font-size: 14px; letter-spacing: .08em;
+    font-family: var(--font-family-mono); font-size: 28px; letter-spacing: .04em;
     fill: var(--color-walnut); text-anchor: middle; font-weight: 500;
   }
 
@@ -767,6 +770,9 @@ const beats = beatCities.map((city, i) => {
     .fly-photo:nth-child(1) { top: 3%;  left: -8%;  right: auto; --rot: -6deg; --fx: -54px; --fy: -8px; }
     .fly-photo:nth-child(2) { top: -4%; right: -7%; left: auto;  --rot:  5deg; --fx:  54px; --fy: -28px; }
     .fly-photo:nth-child(3) { display: block; top: auto; bottom: 1%; right: 1%; left: auto; --rot: -4deg; --fx: 30px; --fy: 48px; }
+    /* map is larger on desktop, so smaller SVG-unit labels render the same size */
+    .node-label { font-size: 19px; }
+    .home-label { font-size: 18px; }
   }
 
   /* ---------- THE COUNT ---------- */
