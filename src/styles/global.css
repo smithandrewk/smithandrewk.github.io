@@ -68,9 +68,8 @@ html.espresso .prose pre {
 
 /* ===== BASE STYLES ===== */
 
-html {
-  scroll-behavior: smooth;
-}
+/* No global smooth-scroll: it animates/queues scroll deltas and fights long
+   sticky-scroll pages (e.g. /orbit), causing upward-scroll jitter. */
 
 /* Disable Apple HDR gain map rendering - forces SDR mode */
 img {

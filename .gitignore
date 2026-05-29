@@ -23,6 +23,11 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# e2e / Playwright artifacts (node_modules already ignored globally above)
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/
+
 # Orbit: keep heavy iPhone video originals out of the repo (transcoded .mp4 are committed)
 public/media/orbit/**/*.mov
 public/media/orbit/**/*.MOV
