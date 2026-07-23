@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { AsciiEffect } from '../components/ui/ascii-effect';
 ---
 
 <Layout title="Home">
@@ -26,11 +27,21 @@ import Layout from '../layouts/Layout.astro';
 
         <!-- Photo -->
         <div class="order-2 md:order-1">
-          <div class="aspect-[4/5] max-w-sm mx-auto md:mx-0">
-            <img
-              src="/media/avatar.png"
-              alt="Andrew Smith"
-              class="w-full h-full object-cover"
+          <div class="aspect-[4/5] max-w-sm mx-auto md:mx-0 overflow-hidden">
+            <AsciiEffect
+              client:visible
+              variant="flow"
+              imageSrc="/media/avatar.png"
+              alt="Andrew Smith, rendered live as ASCII art"
+              fontSize={7}
+              contrast={1.3}
+              brightnessBoost={2.5}
+              backgroundColor="#1A1512"
+              colors={["#F0EBE3", "#C87941", "#8A5A34"]}
+              fit="cover"
+              scale={1.1}
+              flowStrength={9}
+              flowSpeed={0.2}
             />
           </div>
         </div>
