@@ -65,6 +65,10 @@ const ogImageURL = new URL(image, Astro.site);
         if (dark) document.documentElement.classList.add('dark');
       })();
     </script>
+
+    <!-- Vantage analytics beacon (self-hosted at vantage.entrpy.co, honors Do Not
+         Track, no cookies). data-site keys events to this site. -->
+    <script async src="https://vantage.entrpy.co/b.js" data-site="smithandrew"></script>
   </head>
   <body class="min-h-[100dvh] flex flex-col">
     <Header />
