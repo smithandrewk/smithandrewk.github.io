@@ -1,51 +1,63 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog');
-const sortedPosts = posts.sort((a, b) =>
-  new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
-);
+const sortedPosts = posts
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
 ---
 
 <Layout title="Journal" description="Thoughts on ML, music, building, and life.">
-  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8 py-16 md:py-24">
 
-    <header class="mb-16">
-      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Journal</p>
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+    <header class="max-w-3xl mb-16">
+      <h1 class="display text-4xl md:text-6xl text-ink">
         Thoughts, learnings, and occasional ramblings.
       </h1>
     </header>
 
     {sortedPosts.length > 0 ? (
-      <div class="space-y-12">
-        {sortedPosts.map((post) => (
-          <article class="group">
-            <a href={`/blog/${post.slug}`} class="block">
-              <time class="text-xs text-warm-gray tracking-widest uppercase">
+      <div class="divide-y divide-line border-t border-line">
+        {sortedPosts.map((post, i) => (
+          <article class="reveal" style={`--reveal-delay:${i * 80}ms`}>
+            <a href={`/blog/${post.slug}`} class="group grid md:grid-cols-[10rem_1fr] gap-3 md:gap-10 py-10">
+              <time class="meta md:pt-2" datetime={new Date(post.data.date).toISOString()}>
                 {new Date(post.data.date).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
-                  day: 'numeric'
+                  day: 'numeric',
+                  timeZone: 'UTC'
                 })}
               </time>
-              <h2 class="font-serif text-xl md:text-2xl text-walnut mt-2 group-hover:text-cognac transition-colors">
-                {post.data.title}
-              </h2>
-              {post.data.description && (
-                <p class="text-warm-gray mt-2 leading-relaxed">
-                  {post.data.description}
-                </p>
-              )}
+
+              <div>
+                <div class="flex items-start justify-between gap-6">
+                  <h2 class="display text-2xl md:text-4xl text-ink group-hover:text-accent transition-colors">
+                    {post.data.title}
+                  </h2>
+                  <Icon
+                    name="ph:arrow-up-right"
+                    class="w-5 h-5 mt-1.5 shrink-0 text-faint group-hover:text-accent transition-colors"
+                  />
+                </div>
+
+                {post.data.description && (
+                  <p class="mt-3 text-lg text-muted max-w-2xl leading-relaxed">
+                    {post.data.description}
+                  </p>
+                )}
+              </div>
             </a>
           </article>
         ))}
       </div>
     ) : (
-      <div class="text-center py-16">
-        <p class="text-warm-gray">
-          Writing in progress. Check back soon.
+      <div class="border-t border-line pt-10">
+        <p class="text-lg text-ink">Nothing published yet.</p>
+        <p class="mt-2 text-muted">
+          There is writing in progress. It will show up here when it is finished.
         </p>
       </div>
     )}

@@ -1,4 +1,5 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
@@ -12,36 +13,44 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await post.render();
+
+const published = new Date(post.data.date);
 ---
 
 <Layout title={post.data.title} description={post.data.description}>
-  <article class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+  <article class="max-w-3xl mx-auto px-6 lg:px-8 py-12 md:py-16">
 
-    <header class="mb-12">
-      <a href="/blog" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
-        &larr; Journal
-      </a>
+    <a href="/blog" class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+      <Icon name="ph:arrow-left" class="w-4 h-4" />
+      Journal
+    </a>
 
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight mt-8 mb-4">
+    <header class="mt-10 mb-12 pb-10 border-b border-line">
+      <h1 class="display text-4xl md:text-6xl text-ink">
         {post.data.title}
       </h1>
 
-      <time class="text-sm text-warm-gray">
-        {new Date(post.data.date).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}
-      </time>
+      <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <time class="meta" datetime={published.toISOString()}>
+          {published.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: 'UTC'
+          })}
+        </time>
+        {post.data.tags?.map((tag) => <span class="tag">{tag}</span>)}
+      </div>
     </header>
 
     <div class="prose">
       <Content />
     </div>
 
-    <footer class="mt-16 pt-8 border-t border-walnut/10">
-      <a href="/blog" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
-        &larr; Back to Journal
+    <footer class="mt-16 pt-8 border-t border-line">
+      <a href="/blog" class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+        <Icon name="ph:arrow-left" class="w-4 h-4" />
+        Back to Journal
       </a>
     </footer>
 

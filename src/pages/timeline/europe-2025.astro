@@ -1,58 +1,57 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 
 const images = [
-  { src: "/media/timeline/europe/IMG_3509.JPG", alt: "Europe" },
-  { src: "/media/timeline/europe/IMG_5176.jpeg", alt: "Europe" },
-  { src: "/media/timeline/europe/IMG_5186.jpeg", alt: "Europe" },
-  { src: "/media/timeline/europe/IMG_8822.JPG", alt: "Europe" },
-  { src: "/media/timeline/europe/DSCF0114.JPG", alt: "Europe" },
+  { src: "/media/timeline/europe/IMG_3509.JPG", alt: "The Matterhorn above Zermatt" },
+  { src: "/media/timeline/europe/IMG_5176.jpeg", alt: "The Louvre courtyard in Paris" },
+  { src: "/media/timeline/europe/IMG_5186.jpeg", alt: "A Paris street in the afternoon" },
+  { src: "/media/timeline/europe/IMG_8822.JPG", alt: "The Eiffel Tower from below" },
+  { src: "/media/timeline/europe/DSCF0114.JPG", alt: "Alpine valley on the way through" },
 ];
 ---
 
 <Layout title="Europe 2025" description="September 2025 trip through Europe.">
-  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+  <article class="max-w-5xl mx-auto px-6 lg:px-8 py-12 md:py-16">
 
-    <header class="mb-12">
-      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
-        ← Timeline
-      </a>
+    <a href="/timeline" class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+      <Icon name="ph:arrow-left" class="w-4 h-4" />
+      Timeline
+    </a>
 
-      <p class="text-xs text-warm-gray tracking-widest uppercase mt-8 mb-2">September 2025</p>
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+    <header class="mt-10 mb-14 max-w-3xl">
+      <p class="meta">September 2025</p>
+      <h1 class="display text-4xl md:text-6xl text-ink mt-4">
         Europe
       </h1>
+      <p class="mt-5 text-lg text-muted">
+        Two weeks through Switzerland, France, and Italy.
+      </p>
     </header>
 
-    <div class="prose mb-12">
-      <p>
-        Traveled through Europe—an adventure exploring new places and cultures.
-      </p>
-      <!-- Add more writing here if you want -->
+    <div class="columns-1 md:columns-2 gap-4 md:gap-5">
+      {images.map((image) => (
+        <figure class="mb-4 md:mb-5 break-inside-avoid">
+          <div class="media-frame">
+            <img
+              src={image.src}
+              alt={image.alt}
+              class="w-full"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption class="meta mt-2.5">{image.alt}</figcaption>
+        </figure>
+      ))}
     </div>
 
-    {images.length > 0 ? (
-      <div class="columns-2 md:columns-3 gap-4 space-y-4">
-        {images.map((image) => (
-          <img
-            src={image.src}
-            alt={image.alt}
-            class="w-full break-inside-avoid"
-            loading="lazy"
-          />
-        ))}
-      </div>
-    ) : (
-      <div class="text-warm-gray text-sm">
-        Photos coming soon.
-      </div>
-    )}
-
-    <footer class="mt-16 pt-8 border-t border-walnut/10">
-      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
-        ← Back to Timeline
+    <footer class="mt-16 pt-8 border-t border-line">
+      <a href="/timeline" class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+        <Icon name="ph:arrow-left" class="w-4 h-4" />
+        Back to Timeline
       </a>
     </footer>
 
-  </div>
+  </article>
 </Layout>

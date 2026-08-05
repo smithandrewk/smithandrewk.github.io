@@ -1,4 +1,5 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
 
 const events = [
@@ -6,7 +7,7 @@ const events = [
     slug: "europe-2025",
     year: "2025",
     title: "Europe",
-    description: "Traveled through Europe—an adventure exploring new places and cultures.",
+    description: "Two weeks through Switzerland, France, and Italy.",
     month: "September",
     preview: ["/media/timeline/europe/IMG_3509.JPG", "/media/timeline/europe/IMG_5176.jpeg"],
     hasDetail: true,
@@ -15,7 +16,7 @@ const events = [
     slug: "house-renovation",
     year: "2021",
     title: "House Renovation",
-    description: "Major home renovation—new floors, paint, fixtures, and more.",
+    description: "New floors, paint, and fixtures, room by room.",
     month: "August",
     preview: ["/media/timeline/house-renovation/1_before.jpg", "/media/timeline/house-renovation/1_after.JPG"],
     hasDetail: true,
@@ -33,71 +34,74 @@ const events = [
 ---
 
 <Layout title="Timeline" description="A chronology of memories and milestones.">
-  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8 py-16 md:py-24">
 
-    <header class="mb-16">
-      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Timeline</p>
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+    <header class="max-w-3xl mb-16">
+      <h1 class="display text-4xl md:text-6xl text-ink">
         A chronology of memories and milestones.
       </h1>
     </header>
 
-    <div class="relative">
-      <!-- Vertical line -->
-      <div class="absolute left-0 top-0 bottom-0 w-px bg-walnut/10"></div>
+    <!-- Year in the left rail, entry on the right. The rule between them is the
+         spine; there is no dot-on-a-line decoration doing the same job twice. -->
+    <div class="divide-y divide-line border-t border-line">
+      {events.map((event, i) => {
+        const Wrapper = event.hasDetail ? 'a' : 'div';
+        return (
+          <article class="reveal" style={`--reveal-delay:${i * 80}ms`}>
+            <Wrapper
+              href={event.hasDetail ? `/timeline/${event.slug}` : undefined}
+              class="group grid md:grid-cols-[10rem_1fr] gap-4 md:gap-10 py-10"
+            >
+              <p class="meta md:pt-2">
+                {event.month} {event.year}
+              </p>
 
-      <div class="space-y-12">
-        {events.map((event) => (
-          <article class="relative pl-8 group">
-            <!-- Dot -->
-            <div class="absolute left-0 top-2 w-2 h-2 -translate-x-1/2 rounded-full bg-cognac"></div>
+              <div>
+                <div class="flex items-start justify-between gap-6">
+                  <h2 class:list={[
+                    "display text-2xl md:text-3xl text-ink",
+                    event.hasDetail && "group-hover:text-accent transition-colors",
+                  ]}>
+                    {event.title}
+                  </h2>
+                  {event.hasDetail && (
+                    <Icon
+                      name="ph:arrow-up-right"
+                      class="w-5 h-5 mt-1 shrink-0 text-faint group-hover:text-accent transition-colors"
+                    />
+                  )}
+                </div>
 
-            <p class="text-xs text-warm-gray tracking-widest uppercase mb-2">
-              {event.month ? `${event.month} ${event.year}` : event.year}
-            </p>
-
-            {event.hasDetail ? (
-              <a href={`/timeline/${event.slug}`} class="block">
-                <h2 class="font-serif text-xl text-walnut mb-2 group-hover:text-cognac transition-colors">
-                  {event.title}
-                </h2>
-                <p class="text-warm-gray leading-relaxed mb-4">
+                <p class="mt-3 text-lg text-muted max-w-2xl">
                   {event.description}
                 </p>
+
                 {event.preview.length > 0 && (
-                  <div class="flex gap-2">
+                  <div class="mt-6 flex gap-3">
                     {event.preview.slice(0, 2).map((src) => (
-                      <img
-                        src={src}
-                        alt=""
-                        class="w-24 h-24 object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                        onerror="this.style.display='none'"
-                      />
+                      <div class="media-frame w-32 h-32 md:w-40 md:h-40">
+                        <img
+                          src={src}
+                          alt=""
+                          class="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
                     ))}
-                    <span class="text-xs text-warm-gray self-end mb-1">View more →</span>
                   </div>
                 )}
-              </a>
-            ) : (
-              <>
-                <h2 class="font-serif text-xl text-walnut mb-2">
-                  {event.title}
-                </h2>
-                <p class="text-warm-gray leading-relaxed">
-                  {event.description}
-                </p>
-              </>
-            )}
+              </div>
+            </Wrapper>
           </article>
-        ))}
-      </div>
+        );
+      })}
     </div>
 
-    <div class="mt-16 pt-8 border-t border-walnut/10">
-      <p class="text-warm-gray text-sm">
-        More memories to come. This timeline will grow.
-      </p>
-    </div>
+    <p class="mt-14 text-muted">
+      More memories to come. This timeline will grow.
+    </p>
 
   </div>
 </Layout>
