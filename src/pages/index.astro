@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
-import avatar from '../assets/avatar.png';
+import heroStudio from '../assets/hero-studio.png';
 
 const posts = await getCollection('blog');
 const latest = posts
@@ -96,17 +96,19 @@ const destinations = [
 >
 
   <!-- ===================== HERO =====================
-       Asymmetric split. Four text elements total: headline, subtext, two CTAs.
-       Everything fits above the fold at 1280x800. -->
-  <section class="max-w-6xl mx-auto px-6 lg:px-8 pt-12 md:pt-20 pb-20 md:pb-28">
-    <div class="grid md:grid-cols-12 gap-10 md:gap-12 items-center">
+       The artwork bleeds off the right edge of the viewport while the copy
+       stays on the page grid at left. Nothing is set on top of the pixel art:
+       it is dense, deliberate work and overlaid type would sit on detail that
+       is meant to be read. Four text elements, CTAs above the fold. -->
+  <section class="relative">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8 grid md:grid-cols-2 gap-10 md:gap-0 items-center md:min-h-[clamp(30rem,72vh,40rem)] pt-10 md:pt-0 pb-0">
 
-      <div class="md:col-span-7 order-1">
+      <div class="md:pr-12 order-1">
         <h1 class="display text-[3.25rem] leading-[0.95] sm:text-6xl lg:text-7xl text-ink">
           Andrew Smith
         </h1>
 
-        <p class="mt-6 text-lg md:text-xl text-muted max-w-lg text-balance">
+        <p class="mt-6 text-lg md:text-xl text-muted max-w-md text-balance">
           ML engineer, musician, and builder in South Carolina.
         </p>
 
@@ -119,15 +121,16 @@ const destinations = [
         </div>
       </div>
 
-      <div class="md:col-span-5 order-2">
+      <!-- Runs to the right edge of the viewport at desktop, full-width above it. -->
+      <div class="order-2 -mx-6 md:mx-0 md:absolute md:inset-y-0 md:left-1/2 md:right-0">
         <Image
-          src={avatar}
-          alt="Illustration of Andrew at his desk, writing code with a coffee"
-          widths={[480, 720, 960]}
-          sizes="(min-width: 768px) 40vw, 100vw"
+          src={heroStudio}
+          alt="Pixel art of Andrew at his desk at dusk: two monitors of code, a stage piano, a steaming coffee, and pines out the window"
+          widths={[760, 1100, 1656]}
+          sizes="(min-width: 768px) 50vw, 100vw"
           loading="eager"
           fetchpriority="high"
-          class="w-full max-w-sm md:max-w-none mx-auto"
+          class="w-full h-full object-cover aspect-[16/10] md:aspect-auto"
         />
       </div>
 
