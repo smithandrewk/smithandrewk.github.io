@@ -3,17 +3,17 @@ import fs from 'node:fs';
 import Layout from '../layouts/Layout.astro';
 
 /* ============================================================================
-   THE GRAVITY OF OLD FRIENDS — a scroll-driven exhibit
+   THE GRAVITY OF OLD FRIENDS: a scroll-driven exhibit
    ----------------------------------------------------------------------------
    HOW TO BACKFILL THE YEAR:
    Everything below is driven by two arrays: CITIES and meetups.
    • To add a reunion, add an object to `meetups`. Reference a city by name.
-   • If the city isn't in CITIES yet, add it with its { lat, lon } — the map
+   • If the city isn't in CITIES yet, add it with its { lat, lon }. The map
      projection handles the rest automatically (works for anywhere in/near SC).
    • Mark the real ones; the entries flagged `sample: true` are placeholders
      using photos already in /media/gallery so the page looks alive. Replace
      them as you remember the actual nights.
-   HOME BASE is Columbia — change HOME below if that's wrong.
+   HOME BASE is Columbia. Change HOME below if that's wrong.
    ========================================================================== */
 
 const HOME = "Columbia";
@@ -55,11 +55,11 @@ const CITIES: Record<string, { lat: number; lon: number }> = {
 // `friend` may be one name or several (a group reunion credits everyone there).
 const meetups = [
   // Pulled from Google Calendar (2026 year-to-date) + Andrew's notes. Notes are
-  // first drafts — edit freely, and drop photo paths into `photos` as you find them.
+  // first drafts, edit freely, and drop photo paths into `photos` as you find them.
   {
     date: "2026-05-29", friend: "Zenas", city: "Charleston", tonight: true,
     title: "A gig in Charleston",
-    note: "Driving down to play keys with Zenas tonight. Two hours each way for a couple of hours on stage — and worth every mile.",
+    note: "Driving down to play keys with Zenas tonight. Two hours each way for a couple of hours on stage, and worth every mile.",
     photos: [], // tonight's shots go in public/media/orbit/05-29-zenas-charleston/
   },
   {
@@ -71,25 +71,25 @@ const meetups = [
   {
     date: "2026-05-12", friend: "Drew", city: "Greenville",
     title: "Another Greenville run",
-    note: "Up to see Drew again. The drive's getting familiar — that's a good problem to have.",
+    note: "Up to see Drew again. The drive's getting familiar. That's a good problem to have.",
     photos: [],
   },
   {
     date: "2026-05-10", friend: ["Devin", "Alvin"], city: "Charleston",
     title: "ShareHouse, Charleston",
-    note: "Playing the ShareHouse in Charleston with Devin and Alvin — music's the best excuse to get the crew back in one room.",
+    note: "Playing the ShareHouse in Charleston with Devin and Alvin. Music's the best excuse to get the crew back in one room.",
     photos: [],
   },
   {
     date: "2026-05-06", friend: "Drew", city: "Greenville",
     title: "Up for work, dinner with Drew",
-    note: "An overnight work trip to the upstate — which, with Drew up there, always turns into dinner and catching up too.",
+    note: "An overnight work trip to the upstate, which, with Drew up there, always turns into dinner and catching up too.",
     photos: [],
   },
   {
     date: "2026-04-24", friend: ["Zenas", "Griffin"], city: "Charleston",
     title: "Pasta night in Charleston",
-    note: "Then all the way south that same night — pasta night with Zenas and Griffin, plus a gig. One of those days that just didn't end.",
+    note: "Then all the way south that same night: pasta night with Zenas and Griffin, plus a gig. One of those days that just didn't end.",
     photos: [],
   },
   {
@@ -101,7 +101,7 @@ const meetups = [
   {
     date: "2026-04-17", friend: ["Ben", "Rylee", "Graham"], city: "Hilton Head",
     title: "Heritage on Hilton Head",
-    note: "The whole crew on the coast for the Heritage — Ben, Rylee, and Graham. The kind of weekend you plan the rest of the year around.",
+    note: "The whole crew on the coast for the Heritage with Ben, Rylee, and Graham. The kind of weekend you plan the rest of the year around.",
     photos: [],
   },
   {
@@ -113,7 +113,7 @@ const meetups = [
   {
     date: "2026-03-28", friend: ["Drew", "Ben", "Rylee", "Graham", "Taylor"], city: "Greenville",
     title: "Halls with the crew",
-    note: "Coffee with Taylor first, then dinner at Halls Chophouse with the Conquer Nations crew — Drew, Ben, Rylee, and Graham. Everyone in one place for a night.",
+    note: "Coffee with Taylor first, then dinner at Halls Chophouse with the Conquer Nations crew: Drew, Ben, Rylee, and Graham. Everyone in one place for a night.",
     photos: [],
   },
   {
@@ -131,7 +131,7 @@ const meetups = [
   {
     date: "2026-02-16", friend: "Ben", city: "Columbia",
     title: "Dinner with Ben",
-    note: "No driving, no planning — just dinner with Ben. A reminder that some of them never left.",
+    note: "No driving, no planning, just dinner with Ben. A reminder that some of them never left.",
     photos: [],
   },
   {
@@ -143,13 +143,13 @@ const meetups = [
   {
     date: "2026-01-30", friend: ["Drew", "Ben", "Rylee", "Graham"], city: "Greenville",
     title: "A snow-day weekend with the crew",
-    note: "A whole weekend in Greenville with the Conquer Nations crew — poker Friday night, then a surprise snow day: Waffle House, steaks, and nowhere to be. South Carolina barely gets these.",
+    note: "A whole weekend in Greenville with the Conquer Nations crew: poker Friday night, then a surprise snow day: Waffle House, steaks, and nowhere to be. South Carolina barely gets these.",
     photos: [],
   },
   {
     date: "2026-01-09", friend: ["Drew", "Lake"], city: "Greenville",
     title: "Greenville with Drew & Lake",
-    note: "The first road trip of the year — up to Greenville to see Drew and Lake.",
+    note: "The first road trip of the year, up to Greenville to see Drew and Lake.",
     photos: [],
   },
 ];
@@ -183,7 +183,7 @@ function slugOf(m: { date: string; friend: string | string[]; city: string }): s
   return slugify(`${m.date.slice(5)}-${friendsOf(m).join("-")}-${m.city}`);
 }
 const IMG_RE = /\.(jpe?g|png|webp|avif)$/i;
-const VID_RE = /\.(mp4|webm|m4v)$/i; // raw .mov is ignored — transcode to .mp4 first
+const VID_RE = /\.(mp4|webm|m4v)$/i; // raw .mov is ignored, transcode to .mp4 first
 function mediaFor(slug: string, fallback: string[]) {
   try {
     const files = fs.readdirSync(`public/media/orbit/${slug}`)
@@ -193,7 +193,7 @@ function mediaFor(slug: string, fallback: string[]) {
       src: `/media/orbit/${slug}/${f}`,
       type: VID_RE.test(f) ? "video" : "image",
     }));
-  } catch { /* folder absent or empty — fall back */ }
+  } catch { /* folder absent or empty, fall back */ }
   return fallback.map(s => ({ src: s, type: "image" }));
 }
 // resolve each reunion's media (images + transcoded videos) from its folder
@@ -225,7 +225,7 @@ const dates = meetups.map(m => +new Date(m.date)).sort((a, b) => a - b);
 const spanDays = (dates[dates.length - 1] - dates[0]) / 86400000;
 const weeksBetween = totalReunions > 1
   ? (spanDays / (totalReunions - 1) / 7).toFixed(1)
-  : "—";
+  : "-";
 
 // per-month tally (Jan..Dec of TODAY's year)
 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -257,7 +257,7 @@ const beatCopy: Record<string, string> = {
   Greenville: "Up in the foothills now. Close enough to drive, far enough to need a plan.",
   Clemson: "A standing invitation to meet halfway and hike it like we used to.",
   Charleston: "Two hours south, on the water. Where Zenas plays, and where I'm headed tonight.",
-  Beaufort: "All the way to the low country — for no reason other than to see each other.",
+  Beaufort: "All the way to the low country, for no reason other than to see each other.",
   Spartanburg: "Off the interstate, easy to drive past, hard to actually stop in.",
   "Myrtle Beach": "The annual one. The whole crew, one stretch of coast, once a year if we're lucky.",
   "Hilton Head": "Far enough south it's basically a vacation to say hello.",
@@ -300,7 +300,7 @@ const beats = beatCities.map((city, i) => {
     miles: city === HOME ? 0 : Math.round(miles(HOME, city)),
     arc: city === HOME ? "" : arcPath(city),
     x: p.x, y: p.y,
-    // Savannah sits just below Hilton Head — drop its label beneath the dot so
+    // Savannah sits just below Hilton Head, so drop its label beneath the dot so
     // the two coastal labels don't collide. Everyone else sits above their dot.
     labelDy: city === "Savannah" ? 38 : -20,
   };
@@ -321,7 +321,6 @@ const beats = beatCities.map((city, i) => {
       <div class="hero-grain" aria-hidden="true"></div>
 
       <div class="hero-inner">
-        <p class="eyebrow reveal">An Exhibit · South Carolina · 2026</p>
         <h1 class="hero-title">
           <span class="reveal" style="--d:.05s">The Gravity</span>
           <span class="reveal" style="--d:.15s">of Old</span>
@@ -339,17 +338,12 @@ const beats = beatCities.map((city, i) => {
           <div><dt>{totalMiles.toLocaleString()}</dt><dd>miles between us</dd></div>
         </dl>
 
-        <div class="scroll-cue reveal" style="--d:.8s" aria-hidden="true">
-          <span>Scroll</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l6-6m-6 6l-6-6"/></svg>
-        </div>
       </div>
     </section>
 
     <!-- ================= PREMISE ================= -->
     <section class="premise">
       <div class="premise-inner">
-        <p class="eyebrow on-scroll">The premise</p>
         <p class="lead on-scroll">
           You don't notice it happening. One by one, the people who used to be a
           five-minute drive away become a text that says <em>"next time you're in town."</em>
@@ -359,7 +353,7 @@ const beats = beatCities.map((city, i) => {
           a best friend takes a tank of gas and a free weekend.
         </blockquote>
         <p class="body on-scroll">
-          So I started keeping track. Not of everyone — of the few that matter most, and
+          So I started keeping track. Not of everyone, just the few that matter most, and
           the distance it now takes to close. Every dot on the map that follows took a plan,
           a drive, or a flight. None of them just happened. That's the whole point.
         </p>
@@ -369,7 +363,6 @@ const beats = beatCities.map((city, i) => {
     <!-- ================= THE MAP (pinned scrollytelling) ================= -->
     <section class="map-section">
       <div class="map-intro">
-        <p class="eyebrow on-scroll">The map</p>
         <h2 class="section-title on-scroll">Closing the distance</h2>
       </div>
 
@@ -466,7 +459,6 @@ const beats = beatCities.map((city, i) => {
     <!-- ================= THE COUNT (charts) ================= -->
     <section class="count">
       <div class="count-inner">
-        <p class="eyebrow on-scroll">The count</p>
         <h2 class="section-title on-scroll">How often, really</h2>
         <p class="count-lead on-scroll">
           On average, about <strong>{weeksBetween} weeks</strong> pass between
@@ -571,22 +563,22 @@ const beats = beatCities.map((city, i) => {
 
 <style>
   /* ---------- shared ---------- */
-  .orbit { --red: #C8442E; --red-bright: #E8553B; --ink: #1A1512; }
+  .orbit { --red: var(--color-accent); --red-bright: #7B96FF; --ink: #101010; }
   .eyebrow {
     font-family: var(--font-family-mono); font-size: .7rem; letter-spacing: .22em;
-    text-transform: uppercase; color: var(--color-cognac); margin-bottom: 1.25rem;
+    text-transform: uppercase; color: var(--color-accent); margin-bottom: 1.25rem;
   }
   .section-title {
-    font-family: var(--font-family-serif); font-weight: 600;
-    font-size: clamp(2rem, 7vw, 3.25rem); color: var(--color-walnut);
+    font-family: var(--font-family-sans); font-weight: 600;
+    font-size: clamp(2rem, 7vw, 3.25rem); color: var(--color-ink);
     line-height: 1.05; letter-spacing: -.01em;
   }
 
   /* ---------- HERO ---------- */
   .hero {
     position: relative; min-height: 100svh; display: flex; align-items: center;
-    background: radial-gradient(120% 90% at 70% 10%, #2A2018 0%, #1A1512 55%, #110D0A 100%);
-    color: #F0EBE3; overflow: hidden; isolation: isolate;
+    background: radial-gradient(120% 90% at 70% 10%, #1E1E1E 0%, #101010 55%, #0A0A0A 100%);
+    color: var(--color-paper); overflow: hidden; isolation: isolate;
   }
   .hero-map {
     position: absolute; inset: auto -18% -28% auto; width: 95%; max-width: 900px;
@@ -603,7 +595,7 @@ const beats = beatCities.map((city, i) => {
   }
   .hero .eyebrow { color: var(--red-bright); }
   .hero-title {
-    font-family: var(--font-family-serif); font-weight: 600; color: #FAF7F2;
+    font-family: var(--font-family-sans); font-weight: 600; color: var(--color-paper);
     font-size: clamp(3rem, 14vw, 7rem); line-height: .92; letter-spacing: -.02em;
     margin: 0 0 1.75rem;
   }
@@ -611,7 +603,7 @@ const beats = beatCities.map((city, i) => {
   .hero-accent { font-style: italic; color: var(--red-bright); }
   .hero-dek {
     font-size: clamp(1.05rem, 2.6vw, 1.35rem); line-height: 1.55;
-    color: #D8CEC2; max-width: 38ch; margin-bottom: 2.75rem;
+    color: #C9C9C4; max-width: 38ch; margin-bottom: 2.75rem;
   }
   .hero-stats {
     display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem 2rem;
@@ -619,16 +611,16 @@ const beats = beatCities.map((city, i) => {
   }
   .hero-stats div { border-top: 1px solid rgba(232,85,59,.35); padding-top: .6rem; }
   .hero-stats dt {
-    font-family: var(--font-family-serif); font-size: clamp(1.8rem, 6vw, 2.6rem);
-    color: #FAF7F2; line-height: 1;
+    font-family: var(--font-family-sans); font-size: clamp(1.8rem, 6vw, 2.6rem);
+    color: var(--color-paper); line-height: 1;
   }
   .hero-stats dd {
     font-family: var(--font-family-mono); font-size: .68rem; letter-spacing: .14em;
-    text-transform: uppercase; color: #A89C8E; margin: .4rem 0 0;
+    text-transform: uppercase; color: #8E8E8A; margin: .4rem 0 0;
   }
   .scroll-cue {
     margin-top: 3.5rem; display: flex; flex-direction: column; align-items: center;
-    gap: .5rem; color: #8A7E70; font-family: var(--font-family-mono);
+    gap: .5rem; color: var(--color-muted); font-family: var(--font-family-mono);
     font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;
   }
   .scroll-cue svg { width: 1.1rem; height: 1.1rem; animation: bob 2s ease-in-out infinite; }
@@ -636,23 +628,23 @@ const beats = beatCities.map((city, i) => {
   @media (min-width: 640px) { .hero-stats { grid-template-columns: repeat(4, 1fr); } }
 
   /* ---------- PREMISE ---------- */
-  .premise { background: var(--color-cream); padding: clamp(5rem, 14vw, 9rem) 1.5rem; }
+  .premise { background: var(--color-paper); padding: clamp(5rem, 14vw, 9rem) 1.5rem; }
   .premise-inner { max-width: 40rem; margin: 0 auto; }
   .lead {
-    font-family: var(--font-family-serif); font-size: clamp(1.5rem, 4.5vw, 2.1rem);
-    line-height: 1.35; color: var(--color-walnut); margin: 0 0 2rem;
+    font-family: var(--font-family-sans); font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+    line-height: 1.35; color: var(--color-ink); margin: 0 0 2rem;
   }
   .lead em { color: var(--red); font-style: italic; }
   .pull {
     border: none; margin: 2.5rem 0; padding: 0 0 0 1.5rem;
-    border-left: 3px solid var(--red); font-family: var(--font-family-serif);
+    border-left: 3px solid var(--red); font-family: var(--font-family-sans);
     font-style: italic; font-size: clamp(1.15rem, 3vw, 1.5rem); line-height: 1.4;
-    color: var(--color-charcoal);
+    color: var(--color-ink-soft);
   }
-  .body { color: var(--color-warm-gray); font-size: 1.05rem; line-height: 1.7; }
+  .body { color: var(--color-muted); font-size: 1.05rem; line-height: 1.7; }
 
   /* ---------- MAP SCROLLYTELLING ---------- */
-  .map-section { background: var(--color-linen); padding-top: clamp(4rem, 10vw, 7rem); }
+  .map-section { background: var(--color-surface); padding-top: clamp(4rem, 10vw, 7rem); }
   .map-intro { max-width: 40rem; margin: 0 auto 1rem; padding: 0 1.5rem; }
   .scrolly { position: relative; overflow-anchor: none; }
   .map-sticky {
@@ -684,7 +676,7 @@ const beats = beatCities.map((city, i) => {
   .fly-photo:nth-child(3) { display: none; }
 
   .sc-outline {
-    fill: rgba(92,64,51,.05); stroke: var(--color-walnut); stroke-width: 1.5;
+    fill: rgba(92,64,51,.05); stroke: var(--color-ink); stroke-width: 1.5;
     stroke-opacity: .35; stroke-dasharray: 1; stroke-dashoffset: 1;
     transition: stroke-dashoffset 1.6s ease;
   }
@@ -706,16 +698,16 @@ const beats = beatCities.map((city, i) => {
   .node.active .node-dot { fill: var(--red-bright); }
   .node-label {
     font-family: var(--font-family-mono); font-size: 30px; font-weight: 500;
-    fill: var(--color-walnut); text-anchor: middle; opacity: .7;
+    fill: var(--color-ink); text-anchor: middle; opacity: .7;
   }
   .node.active .node-label { fill: var(--red); opacity: 1; font-weight: 700; }
   @keyframes ping { 0% { opacity: .35; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
 
-  .home-dot { fill: var(--color-walnut); }
-  .home-pulse { fill: var(--color-walnut); opacity: .25; transform-box: fill-box; transform-origin: center; animation: ping 2.4s ease-out infinite; }
+  .home-dot { fill: var(--color-ink); }
+  .home-pulse { fill: var(--color-ink); opacity: .25; transform-box: fill-box; transform-origin: center; animation: ping 2.4s ease-out infinite; }
   .home-label {
     font-family: var(--font-family-mono); font-size: 28px; letter-spacing: .04em;
-    fill: var(--color-walnut); text-anchor: middle; font-weight: 500;
+    fill: var(--color-ink); text-anchor: middle; font-weight: 500;
   }
 
   .steps { position: relative; margin-top: -100svh; z-index: 1; }
@@ -724,7 +716,7 @@ const beats = beatCities.map((city, i) => {
     justify-content: center; padding: 0 1.25rem 5svh; pointer-events: none;
   }
   .step-card {
-    pointer-events: auto; background: var(--color-cream);
+    pointer-events: auto; background: var(--color-paper);
     border: 1px solid rgba(92,64,51,.12); border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg); padding: 1.4rem 1.6rem; max-width: 26rem; width: 100%;
     opacity: .35; transform: translateY(14px) scale(.99);
@@ -734,7 +726,7 @@ const beats = beatCities.map((city, i) => {
   .step-kicker {
     display: flex; gap: .6rem; align-items: center; font-family: var(--font-family-mono);
     font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--color-warm-gray); margin-bottom: .5rem;
+    color: var(--color-muted); margin-bottom: .5rem;
   }
   .step-miles { color: var(--red); font-weight: 700; }
   .step-count {
@@ -742,10 +734,10 @@ const beats = beatCities.map((city, i) => {
     border-radius: 999px; letter-spacing: .06em;
   }
   .step-city {
-    font-family: var(--font-family-serif); font-size: 1.7rem;
-    color: var(--color-walnut); margin: 0 0 .5rem; line-height: 1.1;
+    font-family: var(--font-family-sans); font-size: 1.7rem;
+    color: var(--color-ink); margin: 0 0 .5rem; line-height: 1.1;
   }
-  .step-copy { color: var(--color-warm-gray); line-height: 1.55; margin: 0; font-size: 1rem; }
+  .step-copy { color: var(--color-muted); line-height: 1.55; margin: 0; font-size: 1rem; }
   .step-events {
     list-style: none; margin: 1rem 0 0; padding: .9rem 0 0; display: flex;
     flex-direction: column; gap: .55rem; border-top: 1px solid rgba(92,64,51,.12);
@@ -756,8 +748,8 @@ const beats = beatCities.map((city, i) => {
     letter-spacing: .04em; text-transform: uppercase; color: var(--red); padding-top: .05rem;
   }
   .se-title {
-    font-family: var(--font-family-serif); font-size: .95rem; line-height: 1.3;
-    color: var(--color-walnut);
+    font-family: var(--font-family-sans); font-size: .95rem; line-height: 1.3;
+    color: var(--color-ink);
   }
 
   @media (min-width: 900px) {
@@ -776,17 +768,17 @@ const beats = beatCities.map((city, i) => {
   }
 
   /* ---------- THE COUNT ---------- */
-  .count { background: var(--color-cream); padding: clamp(5rem, 13vw, 8rem) 1.5rem; }
+  .count { background: var(--color-paper); padding: clamp(5rem, 13vw, 8rem) 1.5rem; }
   .count-inner { max-width: 44rem; margin: 0 auto; }
   .count-lead {
-    color: var(--color-warm-gray); font-size: 1.1rem; line-height: 1.6;
+    color: var(--color-muted); font-size: 1.1rem; line-height: 1.6;
     margin: 1rem 0 3rem; max-width: 34ch;
   }
   .count-lead strong { color: var(--red); }
   .chart { margin-bottom: 3.5rem; }
   .chart-label {
     font-family: var(--font-family-mono); font-size: .7rem; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--color-warm-gray); margin-bottom: 1.25rem;
+    text-transform: uppercase; color: var(--color-muted); margin-bottom: 1.25rem;
   }
   /* months */
   .months { display: grid; grid-template-columns: repeat(12, 1fr); gap: .35rem; align-items: end; height: 180px; }
@@ -794,7 +786,7 @@ const beats = beatCities.map((city, i) => {
   .month-dots { display: flex; flex-direction: column-reverse; gap: 4px; flex: 1; justify-content: flex-end; width: 100%; align-items: center; }
   .tally {
     width: 70%; max-width: 22px; min-height: 8px; height: var(--h); border-radius: 3px;
-    background: var(--color-walnut); opacity: .8; transform: scaleY(0);
+    background: var(--color-ink); opacity: .8; transform: scaleY(0);
     transform-origin: bottom; transition: transform .5s ease;
   }
   [data-chart].in .tally { transform: scaleY(1); }
@@ -808,22 +800,22 @@ const beats = beatCities.map((city, i) => {
   /* friend bars */
   .bars { display: flex; flex-direction: column; gap: .85rem; }
   .bar-row { display: grid; grid-template-columns: 5.5rem 1fr 1.5rem; gap: .75rem; align-items: center; }
-  .bar-name { font-family: var(--font-family-serif); color: var(--color-walnut); font-size: 1rem; }
+  .bar-name { font-family: var(--font-family-sans); color: var(--color-ink); font-size: 1rem; }
   .bar-track { height: 12px; background: rgba(92,64,51,.08); border-radius: 999px; overflow: hidden; }
   .bar-fill {
     height: 100%; width: 0; border-radius: 999px;
-    background: linear-gradient(90deg, var(--color-walnut), var(--red));
+    background: linear-gradient(90deg, var(--color-ink), var(--red));
     transition: width .9s cubic-bezier(.2,.7,.2,1);
   }
   [data-chart].in .bar-fill { width: var(--w); }
-  .bar-count { font-family: var(--font-family-mono); font-size: .85rem; color: var(--color-warm-gray); text-align: right; }
+  .bar-count { font-family: var(--font-family-mono); font-size: .85rem; color: var(--color-muted); text-align: right; }
 
   /* ---------- THE LOG ---------- */
-  .log { background: var(--color-linen); padding: clamp(5rem, 13vw, 8rem) 1.5rem; }
+  .log { background: var(--color-surface); padding: clamp(5rem, 13vw, 8rem) 1.5rem; }
   .log-inner { max-width: 46rem; margin: 0 auto; }
   .entries { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
   .entry {
-    background: var(--color-cream); border-radius: var(--radius-lg);
+    background: var(--color-paper); border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md); padding: 1.5rem; border: 1px solid transparent;
     transition: transform .3s ease, box-shadow .3s ease;
   }
@@ -832,18 +824,18 @@ const beats = beatCities.map((city, i) => {
   .entry-meta {
     display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
     font-family: var(--font-family-mono); font-size: .72rem; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--color-warm-gray); margin-bottom: .9rem;
+    text-transform: uppercase; color: var(--color-muted); margin-bottom: .9rem;
   }
   .badge {
-    background: var(--red); color: #FAF7F2; padding: .2rem .6rem; border-radius: 999px;
+    background: var(--red); color: var(--color-paper); padding: .2rem .6rem; border-radius: 999px;
     font-weight: 700; letter-spacing: .12em; animation: glow 2.2s ease-in-out infinite;
   }
   @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(200,68,46,.5); } 50% { box-shadow: 0 0 0 6px rgba(200,68,46,0); } }
-  .entry-date { color: var(--color-walnut); font-weight: 500; }
-  .entry-city { color: var(--color-cognac); }
-  .entry-title { font-family: var(--font-family-serif); font-size: 1.45rem; color: var(--color-walnut); margin: 0 0 .25rem; line-height: 1.15; }
+  .entry-date { color: var(--color-ink); font-weight: 500; }
+  .entry-city { color: var(--color-accent); }
+  .entry-title { font-family: var(--font-family-sans); font-size: 1.45rem; color: var(--color-ink); margin: 0 0 .25rem; line-height: 1.15; }
   .entry-friend { font-family: var(--font-family-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--red); margin: 0 0 .75rem; }
-  .entry-note { color: var(--color-warm-gray); line-height: 1.6; margin: 0; }
+  .entry-note { color: var(--color-muted); line-height: 1.6; margin: 0; }
   .entry-photos {
     margin-top: 1.25rem; display: grid; gap: .6rem;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -854,19 +846,19 @@ const beats = beatCities.map((city, i) => {
 
   /* ---------- OUTRO ---------- */
   .outro {
-    background: radial-gradient(120% 100% at 30% 0%, #2A2018 0%, #1A1512 60%, #110D0A 100%);
-    color: #F0EBE3; padding: clamp(6rem, 18vw, 11rem) 1.5rem; text-align: center;
+    background: radial-gradient(120% 100% at 30% 0%, #1E1E1E 0%, #101010 60%, #0A0A0A 100%);
+    color: var(--color-paper); padding: clamp(6rem, 18vw, 11rem) 1.5rem; text-align: center;
   }
   .outro-inner { max-width: 40rem; margin: 0 auto; }
   .outro-line {
-    font-family: var(--font-family-serif); font-size: clamp(1.4rem, 4vw, 2rem);
-    line-height: 1.35; color: #D8CEC2; margin: 0 0 .5rem;
+    font-family: var(--font-family-sans); font-size: clamp(1.4rem, 4vw, 2rem);
+    line-height: 1.35; color: #C9C9C4; margin: 0 0 .5rem;
   }
-  .outro-line.big { font-size: clamp(2rem, 8vw, 3.5rem); color: #FAF7F2; font-style: italic; }
+  .outro-line.big { font-size: clamp(2rem, 8vw, 3.5rem); color: var(--color-paper); font-style: italic; }
   .outro-line.big::after { content: ""; display: block; width: 48px; height: 2px; background: var(--red-bright); margin: 1.75rem auto 0; }
   .outro-foot {
     font-family: var(--font-family-mono); font-size: .72rem; letter-spacing: .18em;
-    text-transform: uppercase; color: #8A7E70; margin-top: 2rem;
+    text-transform: uppercase; color: var(--color-muted); margin-top: 2rem;
   }
 
   /* ---------- reveal animations ---------- */
