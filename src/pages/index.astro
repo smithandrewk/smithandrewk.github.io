@@ -1,80 +1,202 @@
 ---
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import avatar from '../assets/avatar.png';
+
+const posts = await getCollection('blog');
+const latest = posts
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())[0];
+
+// Andrew's own line, kept verbatim. It ran as one string separated by middle
+// dots; splitting it into rows lets each clause land instead of blurring.
+const odds = [
+  { pct: '50%', what: "I'm doing machine learning" },
+  { pct: '20%', what: "I'm playing keys" },
+  { pct: '20%', what: "I'm making coffee" },
+  { pct: '30%', what: "I'm on Robinhood" },
+  { pct: '100%', what: "I'm Andrew" },
+];
+
+// Six destinations, six cells, no empty cells. Spans and heights vary so the
+// grid has rhythm; four carry a real photograph, two are typographic and are
+// filled with real content rather than padded out.
+const destinations = [
+  {
+    href: '/feed',
+    label: 'Feed',
+    blurb: 'Photos, videos, and moments, full screen.',
+    image: '/media/gallery/teton_inside.jpg',
+    alt: 'Looking out across the Grand Teton range at dusk',
+    span: 'md:col-span-4',
+    height: 'h-72 md:h-[26rem]',
+  },
+  {
+    href: '/orbit',
+    label: 'Orbit',
+    blurb: 'A year of driving to see old friends, mapped.',
+    image: '/media/orbit/04-24-zenas-griffin-charleston/IMG_8137.jpeg',
+    alt: 'A Charleston street at golden hour, on the way to meet Zenas and Griffin',
+    span: 'md:col-span-2',
+    height: 'h-72 md:h-[26rem]',
+  },
+  {
+    href: '/gallery',
+    label: 'Gallery',
+    blurb: 'Everything worth keeping a frame of.',
+    image: '/media/gallery/tahoe.jpeg',
+    alt: 'Lake Tahoe from the shoreline',
+    span: 'md:col-span-2',
+    height: 'h-72 md:h-80',
+  },
+  {
+    href: '/timeline',
+    label: 'Timeline',
+    blurb: 'Europe, a gutted house, and a PhD.',
+    image: '/media/timeline/europe/IMG_3509.JPG',
+    alt: 'The Matterhorn above Zermatt, Switzerland',
+    span: 'md:col-span-2',
+    height: 'h-72 md:h-80',
+  },
+  {
+    href: '/blog',
+    label: 'Journal',
+    // Filled with the actual latest headline, so the typographic cell carries
+    // real content instead of dead space.
+    feature: latest?.data.title ?? null,
+    blurb: 'Long-form, when something is worth the words.',
+    image: null,
+    span: 'md:col-span-2',
+    height: 'md:h-80',
+  },
+  {
+    href: '/consuming',
+    label: 'Consuming',
+    blurb: 'The books, records, and podcasts currently in rotation.',
+    image: null,
+    span: 'md:col-span-6',
+    height: '',
+  },
+];
 ---
 
-<Layout title="Home">
-  <!-- Featured Feed Card -->
-  <section class="max-w-5xl mx-auto px-6 pt-8 md:pt-12">
-    <a href="/feed" class="feed-card group block relative overflow-hidden rounded-warm-lg">
-      <div class="feed-card-bg absolute inset-0"></div>
-      <div class="relative flex items-center justify-between px-6 py-5 md:px-8 md:py-6">
-        <div>
-          <span class="text-xs tracking-widest uppercase text-cream/60 block mb-1">New</span>
-          <span class="font-serif text-lg md:text-xl text-cream group-hover:text-white transition-colors">The Feed</span>
-          <span class="text-cream/50 text-sm ml-3 hidden sm:inline">Photos, videos & moments</span>
+<Layout
+  title="Home"
+  description="Andrew Smith - ML engineer, musician, and builder in South Carolina."
+>
+
+  <!-- ===================== HERO =====================
+       Asymmetric split. Four text elements total: headline, subtext, two CTAs.
+       Everything fits above the fold at 1280x800. -->
+  <section class="max-w-6xl mx-auto px-6 lg:px-8 pt-12 md:pt-20 pb-20 md:pb-28">
+    <div class="grid md:grid-cols-12 gap-10 md:gap-12 items-center">
+
+      <div class="md:col-span-7 order-1">
+        <h1 class="display text-[3.25rem] leading-[0.95] sm:text-6xl lg:text-7xl text-ink">
+          Andrew Smith
+        </h1>
+
+        <p class="mt-6 text-lg md:text-xl text-muted max-w-lg text-balance">
+          ML engineer, musician, and builder in South Carolina.
+        </p>
+
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          <a href="/feed" class="btn btn-primary">
+            The Feed
+            <Icon name="ph:arrow-right" class="w-4 h-4" />
+          </a>
+          <a href="/orbit" class="btn btn-secondary">Orbit</a>
         </div>
-        <svg class="w-5 h-5 text-cream/40 group-hover:text-cream group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7" />
-        </svg>
       </div>
-    </a>
+
+      <div class="md:col-span-5 order-2">
+        <Image
+          src={avatar}
+          alt="Illustration of Andrew at his desk, writing code with a coffee"
+          widths={[480, 720, 960]}
+          sizes="(min-width: 768px) 40vw, 100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="w-full max-w-sm md:max-w-none mx-auto"
+        />
+      </div>
+
+    </div>
   </section>
 
-  <section class="min-h-[80vh] flex items-center">
-    <div class="max-w-5xl mx-auto px-6 py-20 md:py-32">
-      <div class="grid md:grid-cols-[1fr,1.2fr] gap-12 md:gap-16 items-center">
+  <!-- ===================== THE ODDS =====================
+       Typographic statement section. Andrew's copy, one clause per row, the
+       percentage doing the visual work. -->
+  <section class="border-t border-line">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+      <h2 class="display text-3xl md:text-4xl text-ink mb-12">At any given moment</h2>
 
-        <!-- Photo -->
-        <div class="order-2 md:order-1">
-          <div class="aspect-[4/5] max-w-sm mx-auto md:mx-0">
-            <img
-              src="/media/avatar.png"
-              alt="Andrew Smith"
-              class="w-full h-full object-cover"
-            />
+      <dl class="max-w-2xl">
+        {odds.map((row, i) => (
+          <div class="reveal flex items-baseline gap-6 md:gap-10 py-2" style={`--reveal-delay:${i * 70}ms`}>
+            <dt class="font-mono text-3xl md:text-5xl text-accent tabular-nums shrink-0 w-24 md:w-36 text-right">
+              {row.pct}
+            </dt>
+            <dd class="text-xl md:text-2xl text-ink">{row.what}</dd>
           </div>
-        </div>
+        ))}
+      </dl>
+    </div>
+  </section>
 
-        <!-- Text -->
-        <div class="order-1 md:order-2">
-          <p class="text-warm-gray text-sm tracking-widest uppercase mb-6">
-            South Carolina
-          </p>
+  <!-- ===================== DESTINATIONS =====================
+       Bento. Six items, six cells, mixed spans. Four cells carry real
+       photography so it is not a wall of white text tiles. -->
+  <section class="border-t border-line">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+      <h2 class="display text-3xl md:text-4xl text-ink mb-12">Have a look around</h2>
 
-          <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-walnut leading-tight mb-8">
-            Andrew Smith
-          </h1>
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+        {destinations.map((d, i) => (
+          <a
+            href={d.href}
+            class:list={[
+              "reveal group flex flex-col border border-line bg-surface overflow-hidden transition-colors hover:border-line-strong",
+              d.span,
+              d.height,
+            ]}
+            style={`--reveal-delay:${i * 60}ms`}
+          >
+            {d.image ? (
+              <div class="media-frame flex-1 min-h-0">
+                <img
+                  src={d.image}
+                  alt={d.alt}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+            ) : d.feature ? (
+              <div class="flex-1 min-h-0 flex items-center px-5 pt-6">
+                <p class="display text-2xl md:text-3xl text-ink group-hover:text-accent transition-colors">
+                  {d.feature}
+                </p>
+              </div>
+            ) : null}
 
-          <div class="w-12 h-px bg-cognac mb-8"></div>
-
-          <p class="text-warm-gray leading-relaxed">
-            50% chance I'm doing machine learning · 20% chance I'm playing keys · 20% chance I'm making coffee · 30% chance I'm on Robinhood · 100% chance I'm Andrew
-          </p>
-        </div>
-
+            <div class="p-5">
+              <div class="flex items-center justify-between gap-4">
+                <h3 class="text-lg font-medium text-ink">{d.label}</h3>
+                <Icon
+                  name="ph:arrow-up-right"
+                  class="w-4 h-4 text-faint group-hover:text-accent transition-colors shrink-0"
+                />
+              </div>
+              <p class="mt-1.5 text-sm text-muted">{d.blurb}</p>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
   </section>
-<style>
-  .feed-card {
-    box-shadow: 0 4px 24px rgba(92, 64, 51, 0.15), 0 0 0 1px rgba(200, 121, 65, 0.1);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-  }
 
-  .feed-card:hover {
-    box-shadow: 0 8px 32px rgba(92, 64, 51, 0.25), 0 0 0 1px rgba(200, 121, 65, 0.2);
-    transform: translateY(-2px);
-  }
 
-  .feed-card-bg {
-    background: linear-gradient(135deg, #2D2D2D 0%, #5C4033 50%, #C87941 100%);
-    background-size: 200% 200%;
-    animation: shimmer 6s ease-in-out infinite;
-  }
-
-  @keyframes shimmer {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-</style>
 </Layout>

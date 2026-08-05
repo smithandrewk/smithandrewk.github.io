@@ -53,9 +53,12 @@ const ogImageURL = new URL(image, Astro.site);
 
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Resolve theme before paint so there is no flash of the wrong theme. -->
+    <!-- Resolve theme before paint so there is no flash of the wrong theme.
+         Also marks the document as script-enabled, which is what gates the
+         scroll-reveal opacity. No JS means content renders plainly visible. -->
     <script is:inline>
       (() => {
+        document.documentElement.classList.add('js');
         const stored = localStorage.getItem('theme');
         const dark = stored ? stored === 'dark'
           : window.matchMedia('(prefers-color-scheme: dark)').matches;
