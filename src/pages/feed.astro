@@ -1,6 +1,8 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 /**
- * /feed — A vertical snap-scroll feed of mixed media content.
+ * /feed: a vertical snap-scroll feed of mixed media content.
  * Photos, text cards, and before/after reveals in a TikTok-style format.
  */
 
@@ -49,23 +51,35 @@ const feedItems = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#1A1512" />
-    <style>html{background:#1A1512}</style>
+    <meta name="theme-color" content="#0B0B0B" />
+    <style>html{background:#0B0B0B}</style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Feed | Andrew Smith</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossorigin />
 
     <style>
+      @font-face {
+        font-family: 'Geist';
+        src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
+        font-weight: 100 900; font-style: normal; font-display: swap;
+      }
+      @font-face {
+        font-family: 'Geist Mono';
+        src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
+        font-weight: 100 900; font-style: normal; font-display: swap;
+      }
+
+      /* The feed is a standalone immersive surface: always dark, never
+         themed, so it carries its own copy of the tokens. */
       :root {
-        --cream: #FAF7F2;
-        --linen: #F0EBE3;
-        --walnut: #5C4033;
-        --cognac: #C87941;
-        --charcoal: #2D2D2D;
-        --warm-gray: #6B6560;
-        --espresso: #1A1512;
+        --cream: #F7F7F5;
+        --linen: #ECECE8;
+        --walnut: #C9C9C4;
+        --cognac: #7B96FF;
+        --charcoal: #E8E8E4;
+        --warm-gray: #9C9C97;
+        --espresso: #0B0B0B;
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -80,7 +94,7 @@ const feedItems = [
         margin: 0;
         padding: 0;
         background: var(--espresso);
-        font-family: 'DM Sans', system-ui, sans-serif;
+        font-family: 'Geist', system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
         height: 100%;
         overflow: hidden;
@@ -194,7 +208,8 @@ const feedItems = [
       }
 
       .card-caption {
-        font-family: 'Fraunces', Georgia, serif;
+        font-family: 'Geist', system-ui, sans-serif;
+        letter-spacing: -0.02em;
         font-size: 1.5rem;
         font-weight: 600;
         color: var(--cream);
@@ -223,7 +238,8 @@ const feedItems = [
       }
 
       .card-text .card-headline {
-        font-family: 'Fraunces', Georgia, serif;
+        font-family: 'Geist', system-ui, sans-serif;
+        letter-spacing: -0.02em;
         font-size: 1.75rem;
         font-weight: 600;
         color: var(--walnut);
@@ -505,7 +521,8 @@ const feedItems = [
       }
 
       .feed-nav .brand {
-        font-family: 'Fraunces', Georgia, serif;
+        font-family: 'Geist', system-ui, sans-serif;
+        letter-spacing: -0.02em;
         font-size: 1rem;
         letter-spacing: 0;
         text-transform: none;
@@ -536,32 +553,6 @@ const feedItems = [
         transform: scale(1.5);
       }
 
-      /* === Scroll hint === */
-      .scroll-hint {
-        position: fixed;
-        bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 50;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-        color: rgba(250, 247, 242, 0.4);
-        font-size: 0.625rem;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        animation: fade-pulse 2s ease-in-out infinite;
-        transition: opacity 0.5s;
-      }
-
-      .scroll-hint.hidden { opacity: 0; pointer-events: none; }
-
-      .scroll-hint svg {
-        width: 16px;
-        height: 16px;
-        animation: bounce-down 2s ease-in-out infinite;
-      }
 
       @keyframes bounce-down {
         0%, 100% { transform: translateY(0); }
@@ -610,14 +601,6 @@ const feedItems = [
       ))}
     </div>
 
-    <!-- Scroll hint (first card only) -->
-    <div class="scroll-hint" id="scroll-hint">
-      <span>Scroll</span>
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-      </svg>
-    </div>
-
     <!-- Feed -->
     <div class="feed" id="feed">
     {feedItems.map((item, i) => {
@@ -646,14 +629,8 @@ const feedItems = [
               />
               <div class="overlay" />
               <button class="mute-btn" aria-label="Toggle sound">
-                <svg class="icon-muted" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-                <svg class="icon-unmuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
-                </svg>
+                <Icon class="icon-muted" style="display:none" name="ph:speaker-simple-slash" />
+                <Icon class="icon-unmuted" name="ph:speaker-simple-high" />
               </button>
               <div class="card-info">
                 <div class="card-caption">{item.caption}</div>
@@ -687,20 +664,12 @@ const feedItems = [
               />
               <div class="overlay" />
               <span class="podcast-badge">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
+                <Icon name="ph:microphone" width="12" height="12" />
                 Podcast
               </span>
               <button class="mute-btn" aria-label="Toggle sound">
-                <svg class="icon-muted" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-                <svg class="icon-unmuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
-                </svg>
+                <Icon class="icon-muted" style="display:none" name="ph:speaker-simple-slash" />
+                <Icon class="icon-unmuted" name="ph:speaker-simple-high" />
               </button>
               <div class="card-info">
                 <div class="card-caption">{item.caption}</div>
@@ -811,7 +780,6 @@ const feedItems = [
       const feed = document.getElementById('feed')!;
       const cards = document.querySelectorAll('.card');
       cards.forEach((c, i) => c.classList.toggle('visible', i === 0));
-      const scrollHint = document.getElementById('scroll-hint');
 
       // Rebuild progress dots to match shuffled count
       const progressContainer = document.getElementById('progress')!;
@@ -839,11 +807,6 @@ const feedItems = [
             if (video) {
               video.currentTime = 0;
               video.play().catch(() => {});
-            }
-
-            // Hide scroll hint after first scroll
-            if (index > 0 && scrollHint) {
-              scrollHint.classList.add('hidden');
             }
           } else {
             // Pause video when off-screen

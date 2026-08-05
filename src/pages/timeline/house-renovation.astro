@@ -1,4 +1,5 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 
 const beforeAfterPairs = [
@@ -17,73 +18,77 @@ const generalAfter = [
 ---
 
 <Layout title="House Renovation" description="August 2021 home renovation project.">
-  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+  <article class="max-w-5xl mx-auto px-6 lg:px-8 py-12 md:py-16">
 
-    <header class="mb-12">
-      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
-        ← Timeline
-      </a>
+    <a href="/timeline" class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+      <Icon name="ph:arrow-left" class="w-4 h-4" />
+      Timeline
+    </a>
 
-      <p class="text-xs text-warm-gray tracking-widest uppercase mt-8 mb-2">August 2021</p>
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+    <header class="mt-10 mb-14 max-w-3xl">
+      <p class="meta">August 2021</p>
+      <h1 class="display text-4xl md:text-6xl text-ink mt-4">
         House Renovation
       </h1>
+      <p class="mt-5 text-lg text-muted">
+        New floors, paint, and fixtures, room by room.
+      </p>
     </header>
 
-    <div class="prose mb-12">
-      <p>
-        Major home renovation—new floors, paint, fixtures, and more.
-      </p>
-    </div>
-
-    <!-- Before & After Pairs -->
-    <div class="space-y-12 mb-16">
+    <div class="space-y-10 md:space-y-14">
       {beforeAfterPairs.map((pair, index) => (
-        <div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-xs text-warm-gray tracking-widest uppercase mb-2">Before</p>
+        <div class="reveal grid grid-cols-2 gap-3 md:gap-5" style={`--reveal-delay:${(index % 2) * 80}ms`}>
+          <figure>
+            <div class="media-frame">
               <img
                 src={pair.before}
-                alt="Before renovation"
+                alt={`Room ${index + 1} before the renovation`}
                 class="w-full"
                 loading="lazy"
+                decoding="async"
               />
             </div>
-            <div>
-              <p class="text-xs text-warm-gray tracking-widest uppercase mb-2">After</p>
+            <figcaption class="meta mt-2.5">Before</figcaption>
+          </figure>
+          <figure>
+            <div class="media-frame">
               <img
                 src={pair.after}
-                alt="After renovation"
+                alt={`Room ${index + 1} after the renovation`}
                 class="w-full"
                 loading="lazy"
+                decoding="async"
               />
             </div>
-          </div>
+            <figcaption class="meta mt-2.5 text-accent">After</figcaption>
+          </figure>
         </div>
       ))}
     </div>
 
-    <!-- General After Photos -->
-    <div class="border-t border-walnut/10 pt-12">
-      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">The finished home</p>
-      <div class="columns-2 md:columns-3 gap-4 space-y-4">
-        {generalAfter.map((src) => (
-          <img
-            src={src}
-            alt="Finished renovation"
-            class="w-full break-inside-avoid"
-            loading="lazy"
-          />
+    <section class="mt-20 pt-12 border-t border-line">
+      <h2 class="display text-2xl md:text-3xl text-ink mb-8">The finished home</h2>
+      <div class="columns-1 md:columns-3 gap-4">
+        {generalAfter.map((src, i) => (
+          <div class="media-frame mb-4 break-inside-avoid">
+            <img
+              src={src}
+              alt={`The finished house, view ${i + 1}`}
+              class="w-full"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         ))}
       </div>
-    </div>
+    </section>
 
-    <footer class="mt-16 pt-8 border-t border-walnut/10">
-      <a href="/timeline" class="text-xs text-warm-gray tracking-widest uppercase hover:text-walnut transition-colors">
-        ← Back to Timeline
+    <footer class="mt-16 pt-8 border-t border-line">
+      <a href="/timeline" class="inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+        <Icon name="ph:arrow-left" class="w-4 h-4" />
+        Back to Timeline
       </a>
     </footer>
 
-  </div>
+  </article>
 </Layout>

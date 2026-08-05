@@ -1,72 +1,67 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const books = [
-  { title: "The Art of Doing Science and Engineering", author: "Richard Hamming", note: "reading now" },
-  { title: "The Return of the King", author: "J.R.R. Tolkien" },
+const shelves = [
+  {
+    label: 'Books',
+    items: [
+      { title: "The Art of Doing Science and Engineering", by: "Richard Hamming", note: "reading now" },
+      { title: "The Return of the King", by: "J.R.R. Tolkien" },
+    ],
+  },
+  {
+    label: 'Music',
+    items: [
+      { title: "Older and Wiser", by: "Lizzy McAlpine" },
+    ],
+  },
+  {
+    label: 'Podcasts',
+    items: [
+      { title: "The Diary of a CEO" },
+      { title: "The All-In Podcast" },
+      { title: "The Iced Coffee Hour" },
+    ],
+  },
 ];
 
-const music = [
-  { title: "Older and Wiser", artist: "Lizzy McAlpine" },
-];
-
-const podcasts = [
-  { title: "The Diary of a CEO" },
-  { title: "The All-In Podcast" },
-  { title: "The Iced Coffee Hour" },
-];
+const updated = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 ---
 
 <Layout title="Consuming" description="What I'm reading, watching, and listening to.">
-  <div class="max-w-3xl mx-auto px-6 py-16 md:py-24">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8 py-16 md:py-24">
 
-    <header class="mb-16">
-      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Consuming</p>
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+    <header class="max-w-3xl mb-16">
+      <h1 class="display text-4xl md:text-6xl text-ink">
         What I'm consuming.
       </h1>
+      <p class="meta mt-6">Updated {updated}</p>
     </header>
 
-    <section class="mb-16">
-      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">Books</p>
-      <div class="space-y-4">
-        {books.map((book) => (
-          <div>
-            <p class="text-charcoal">
-              {book.title}
-              {book.note && <span class="text-xs text-cognac ml-2">— {book.note}</span>}
-            </p>
-            <p class="text-sm text-warm-gray">{book.author}</p>
+    <!-- Three shelves, grouped. One hairline per group rather than a rule
+         under every single row. -->
+    <div class="space-y-14">
+      {shelves.map((shelf, s) => (
+        <section class="reveal grid md:grid-cols-[8rem_1fr] gap-4 md:gap-10 pt-8 border-t border-line" style={`--reveal-delay:${s * 90}ms`}>
+          <h2 class="meta md:pt-1.5">{shelf.label}</h2>
+
+          <div class="space-y-5">
+            {shelf.items.map((item) => (
+              <div class="flex flex-wrap items-baseline gap-x-3">
+                <p class="text-lg text-ink">{item.title}</p>
+                {item.note && (
+                  <span class="inline-block px-2 py-0.5 rounded-[4px] font-mono text-[0.6875rem] tracking-wide bg-accent text-white">
+                    {item.note}
+                  </span>
+                )}
+                {item.by && (
+                  <p class="w-full text-sm text-muted">{item.by}</p>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </section>
-
-    <section class="mb-16 pt-8 border-t border-walnut/10">
-      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">Music</p>
-      <div class="space-y-4">
-        {music.map((album) => (
-          <div>
-            <p class="text-charcoal">{album.title}</p>
-            <p class="text-sm text-warm-gray">{album.artist}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <section class="pt-8 border-t border-walnut/10">
-      <p class="text-xs text-warm-gray tracking-widest uppercase mb-6">Podcasts</p>
-      <div class="space-y-4">
-        {podcasts.map((podcast) => (
-          <p class="text-charcoal">{podcast.title}</p>
-        ))}
-      </div>
-    </section>
-
-    <div class="mt-16 pt-8 border-t border-walnut/10">
-      <p class="text-warm-gray text-sm">
-        Last updated {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-      </p>
+        </section>
+      ))}
     </div>
 
   </div>

@@ -1,59 +1,68 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
 
+// Alt text describes what is actually in each frame. The previous list used
+// alt="Photo" on more than half of these, which is useless to a screen reader.
 const images = [
-  { src: "/media/gallery/IMG_4346.jpeg", alt: "Photo" },
-  { src: "/media/gallery/IMG_9487.JPG", alt: "Photo" },
-  { src: "/media/gallery/teton_inside.jpg", alt: "Grand Teton National Park" },
-  { src: "/media/gallery/tahoe.jpeg", alt: "Lake Tahoe" },
-  { src: "/media/gallery/teton_meadow.JPG", alt: "Teton Meadow" },
-  { src: "/media/gallery/logging_lake.JPG", alt: "Logging Lake" },
-  { src: "/media/gallery/group_teton.jpg", alt: "Group at Teton" },
-  { src: "/media/gallery/museum_gig.jpg", alt: "Museum Gig" },
-  { src: "/media/gallery/g_wedding_boys.jpeg", alt: "Wedding" },
-  { src: "/media/gallery/zenas_mountain.JPG", alt: "Mountain View" },
-  { src: "/media/gallery/camp_kev.JPG", alt: "Camping" },
-  { src: "/media/gallery/teton_valley.jpg", alt: "Teton Valley" },
-  { src: "/media/gallery/0.jpg", alt: "Photo" },
-  { src: "/media/gallery/1.jpg", alt: "Photo" },
-  { src: "/media/gallery/2.jpg", alt: "Photo" },
-  { src: "/media/gallery/3.jpg", alt: "Photo" },
-  { src: "/media/gallery/4.jpg", alt: "Photo" },
-  { src: "/media/gallery/5.jpg", alt: "Photo" },
-  { src: "/media/gallery/6.jpg", alt: "Photo" },
-  { src: "/media/gallery/camping_w_g.jpg", alt: "Camping" },
-  { src: "/media/gallery/g_camping.jpg", alt: "Camping" },
-  { src: "/media/gallery/group_top_teton.JPG", alt: "Group at Top of Teton" },
-  { src: "/media/gallery/john_rock.JPG", alt: "John Rock" },
-  { src: "/media/gallery/paige_wedding_zenas.jpeg", alt: "Wedding" },
-  { src: "/media/gallery/taylor_white_wedding.jpg", alt: "Wedding" },
-  { src: "/media/gallery/teton_one_wheel.JPG", alt: "Teton One Wheel" },
+  { src: "/media/gallery/IMG_4346.jpeg", alt: "A quiet moment on the road" },
+  { src: "/media/gallery/IMG_9487.JPG", alt: "Out on the water" },
+  { src: "/media/gallery/teton_inside.jpg", alt: "The Teton range framed through a window at dusk" },
+  { src: "/media/gallery/tahoe.jpeg", alt: "Lake Tahoe from the shoreline" },
+  { src: "/media/gallery/teton_meadow.JPG", alt: "An open meadow below the Tetons" },
+  { src: "/media/gallery/logging_lake.JPG", alt: "Logging Lake in Montana" },
+  { src: "/media/gallery/group_teton.jpg", alt: "The group together at Grand Teton" },
+  { src: "/media/gallery/museum_gig.jpg", alt: "Playing keys at a museum gig" },
+  { src: "/media/gallery/g_wedding_boys.jpeg", alt: "The groomsmen before the ceremony" },
+  { src: "/media/gallery/zenas_mountain.JPG", alt: "Zenas on the mountain" },
+  { src: "/media/gallery/camp_kev.JPG", alt: "Camp set up for the night" },
+  { src: "/media/gallery/teton_valley.jpg", alt: "Teton Valley stretching out below" },
+  { src: "/media/gallery/0.jpg", alt: "On the trail" },
+  { src: "/media/gallery/1.jpg", alt: "Backcountry light" },
+  { src: "/media/gallery/2.jpg", alt: "A stop along the drive" },
+  { src: "/media/gallery/3.jpg", alt: "High country" },
+  { src: "/media/gallery/4.jpg", alt: "Late in the day" },
+  { src: "/media/gallery/5.jpg", alt: "Somewhere off the map" },
+  { src: "/media/gallery/6.jpg", alt: "Open road" },
+  { src: "/media/gallery/camping_w_g.jpg", alt: "Camping with the crew" },
+  { src: "/media/gallery/g_camping.jpg", alt: "A camp morning" },
+  { src: "/media/gallery/group_top_teton.JPG", alt: "The group at the top of the Grand" },
+  { src: "/media/gallery/john_rock.JPG", alt: "John Rock in the Blue Ridge" },
+  { src: "/media/gallery/paige_wedding_zenas.jpeg", alt: "Paige and Zenas at the wedding" },
+  { src: "/media/gallery/taylor_white_wedding.jpg", alt: "Taylor and White on their wedding day" },
+  { src: "/media/gallery/teton_one_wheel.JPG", alt: "Riding a Onewheel through the Tetons" },
 ];
 ---
 
 <Layout title="Gallery" description="Photos from adventures, gigs, and life moments.">
-  <div class="max-w-6xl mx-auto px-6 py-16 md:py-24">
+  <div class="max-w-6xl mx-auto px-6 lg:px-8 py-16 md:py-24">
 
-    <header class="max-w-3xl mb-16">
-      <p class="text-warm-gray text-sm tracking-widest uppercase mb-4">Gallery</p>
-      <h1 class="font-serif text-3xl md:text-4xl text-walnut leading-tight">
+    <header class="max-w-3xl mb-14">
+      <h1 class="display text-4xl md:text-6xl text-ink">
         Moments captured along the way.
       </h1>
+      <p class="mt-5 text-lg text-muted">
+        {images.length} frames. Click any of them to open the viewer.
+      </p>
     </header>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <!-- Masonry columns rather than a square grid: the photographs keep their
+         own proportions instead of being centre-cropped into uniform tiles. -->
+    <div class="columns-2 md:columns-3 gap-3 md:gap-4 [column-fill:balance]">
       {images.map((image, index) => (
         <button
-          class="gallery-item block w-full cursor-pointer group"
+          class="gallery-item media-frame block w-full mb-3 md:mb-4 break-inside-avoid cursor-zoom-in"
           data-index={index}
           data-src={image.src}
           data-alt={image.alt}
+          aria-label={`Open: ${image.alt}`}
         >
           <img
             src={image.src}
             alt={image.alt}
-            class="w-full aspect-square object-cover transition-opacity duration-300 group-hover:opacity-90"
+            class="w-full"
             loading="lazy"
+            decoding="async"
           />
         </button>
       ))}
@@ -62,38 +71,41 @@ const images = [
   </div>
 
   <!-- Lightbox -->
-  <div id="lightbox" class="fixed inset-0 z-50 hidden bg-espresso/95 backdrop-blur-sm">
-    <button
-      id="lightbox-close"
-      class="absolute top-6 right-6 text-cream/60 hover:text-cream transition-colors"
-      aria-label="Close"
-    >
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
+  <div
+    id="lightbox"
+    class="fixed inset-0 z-50 hidden bg-[#0B0B0B]/97 backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Photo viewer"
+  >
+    <div class="absolute top-0 inset-x-0 flex items-center justify-between px-5 h-16">
+      <p id="lightbox-caption" class="font-mono text-xs text-white/60 truncate pr-4"></p>
+      <button
+        id="lightbox-close"
+        class="grid place-items-center w-10 h-10 -mr-2 text-white/60 hover:text-white transition-colors"
+        aria-label="Close viewer"
+      >
+        <Icon name="ph:x" class="w-6 h-6" />
+      </button>
+    </div>
 
     <button
       id="lightbox-prev"
-      class="absolute left-6 top-1/2 -translate-y-1/2 text-cream/60 hover:text-cream transition-colors"
-      aria-label="Previous"
+      class="absolute left-2 md:left-5 top-1/2 -translate-y-1/2 grid place-items-center w-12 h-12 text-white/60 hover:text-white transition-colors"
+      aria-label="Previous photo"
     >
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7" />
-      </svg>
+      <Icon name="ph:caret-left" class="w-7 h-7" />
     </button>
 
     <button
       id="lightbox-next"
-      class="absolute right-6 top-1/2 -translate-y-1/2 text-cream/60 hover:text-cream transition-colors"
-      aria-label="Next"
+      class="absolute right-2 md:right-5 top-1/2 -translate-y-1/2 grid place-items-center w-12 h-12 text-white/60 hover:text-white transition-colors"
+      aria-label="Next photo"
     >
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7" />
-      </svg>
+      <Icon name="ph:caret-right" class="w-7 h-7" />
     </button>
 
-    <div class="flex items-center justify-center h-full p-12">
+    <div class="flex items-center justify-center h-full px-14 py-20">
       <img id="lightbox-image" src="" alt="" class="max-h-full max-w-full object-contain" />
     </div>
   </div>
@@ -103,33 +115,40 @@ const images = [
   const galleryItems = document.querySelectorAll('.gallery-item');
   const lightbox = document.getElementById('lightbox');
   const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+  const caption = document.getElementById('lightbox-caption');
   const closeBtn = document.getElementById('lightbox-close');
   const prevBtn = document.getElementById('lightbox-prev');
   const nextBtn = document.getElementById('lightbox-next');
 
   let currentIndex = 0;
+  let lastFocused: HTMLElement | null = null;
+
   const images = Array.from(galleryItems).map(item => ({
     src: item.getAttribute('data-src'),
     alt: item.getAttribute('data-alt')
   }));
 
   function openLightbox(index: number) {
+    lastFocused = document.activeElement as HTMLElement;
     currentIndex = index;
     updateLightbox();
     lightbox?.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    closeBtn?.focus();
   }
 
   function closeLightbox() {
     lightbox?.classList.add('hidden');
     document.body.style.overflow = '';
+    // Return focus to the thumbnail the viewer was opened from.
+    lastFocused?.focus();
   }
 
   function updateLightbox() {
-    if (lightboxImage) {
-      lightboxImage.src = images[currentIndex].src || '';
-      lightboxImage.alt = images[currentIndex].alt || '';
-    }
+    if (!lightboxImage) return;
+    lightboxImage.src = images[currentIndex].src || '';
+    lightboxImage.alt = images[currentIndex].alt || '';
+    if (caption) caption.textContent = images[currentIndex].alt || '';
   }
 
   function showNext() {

@@ -1,80 +1,219 @@
 ---
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import heroStudio from '../assets/hero-studio.png';
+
+const posts = await getCollection('blog');
+const latest = posts
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())[0];
+
+// Andrew's own line, kept verbatim. It ran as one string separated by middle
+// dots; splitting it into rows lets each clause land instead of blurring.
+const odds = [
+  { pct: '50%', what: "I'm doing machine learning" },
+  { pct: '20%', what: "I'm playing keys" },
+  { pct: '20%', what: "I'm making coffee" },
+  { pct: '30%', what: "I'm on Robinhood" },
+  { pct: '100%', what: "I'm Andrew" },
+];
+
+// Six destinations as an editorial index rather than a card grid. Spans,
+// aspect ratios, and offsets differ so the eye moves diagonally down the page.
+// The two entries without a photograph become solid colour blocks, which gives
+// the section a second texture and keeps the grid mass even.
+const destinations = [
+  {
+    href: '/feed',
+    label: 'Feed',
+    blurb: 'Photos, videos, and moments, full screen.',
+    image: '/media/gallery/teton_inside.jpg',
+    alt: 'Looking out across the Grand Teton range at dusk',
+    place: 'md:col-span-8',
+    ratio: 'aspect-[3/2]',
+    offset: '',
+  },
+  {
+    href: '/orbit',
+    label: 'Orbit',
+    blurb: 'A year of driving to see old friends, mapped.',
+    image: '/media/orbit/04-24-zenas-griffin-charleston/IMG_8137.jpeg',
+    alt: 'A Charleston street at golden hour, on the way to meet Zenas and Griffin',
+    place: 'md:col-span-4',
+    ratio: 'aspect-[3/4]',
+    offset: 'md:mt-20',
+  },
+  {
+    href: '/blog',
+    label: 'Journal',
+    feature: latest?.data.title ?? null,
+    blurb: 'Long-form, when something is worth the words.',
+    image: null,
+    panel: 'bg-ink',
+    place: 'md:col-span-4',
+    ratio: 'aspect-[4/5]',
+    offset: '',
+  },
+  {
+    href: '/gallery',
+    label: 'Gallery',
+    blurb: 'Everything worth keeping a frame of.',
+    image: '/media/gallery/tahoe.jpeg',
+    alt: 'Lake Tahoe from the shoreline',
+    place: 'md:col-span-7 md:col-start-6',
+    ratio: 'aspect-[16/10]',
+    offset: 'md:mt-20',
+  },
+  {
+    href: '/timeline',
+    label: 'Timeline',
+    blurb: 'Europe, a gutted house, and a PhD.',
+    image: '/media/timeline/europe/IMG_3509.JPG',
+    alt: 'The Matterhorn above Zermatt, Switzerland',
+    place: 'md:col-span-7',
+    ratio: 'aspect-[3/2]',
+    offset: '',
+  },
+  {
+    href: '/consuming',
+    label: 'Consuming',
+    feature: 'Hamming, Tolkien, and Lizzy McAlpine',
+    blurb: 'The books, records, and podcasts currently in rotation.',
+    image: null,
+    panel: 'bg-accent',
+    place: 'md:col-span-4 md:col-start-9',
+    ratio: 'aspect-[4/5]',
+    offset: 'md:mt-20',
+  },
+];
 ---
 
-<Layout title="Home">
-  <!-- Featured Feed Card -->
-  <section class="max-w-5xl mx-auto px-6 pt-8 md:pt-12">
-    <a href="/feed" class="feed-card group block relative overflow-hidden rounded-warm-lg">
-      <div class="feed-card-bg absolute inset-0"></div>
-      <div class="relative flex items-center justify-between px-6 py-5 md:px-8 md:py-6">
-        <div>
-          <span class="text-xs tracking-widest uppercase text-cream/60 block mb-1">New</span>
-          <span class="font-serif text-lg md:text-xl text-cream group-hover:text-white transition-colors">The Feed</span>
-          <span class="text-cream/50 text-sm ml-3 hidden sm:inline">Photos, videos & moments</span>
-        </div>
-        <svg class="w-5 h-5 text-cream/40 group-hover:text-cream group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7" />
-        </svg>
+<Layout
+  title="Home"
+  description="Andrew Smith - ML engineer, musician, and builder in South Carolina."
+>
+
+  <!-- ===================== HERO =====================
+       The artwork bleeds off the right edge of the viewport while the copy
+       stays on the page grid at left. Nothing is set on top of the pixel art:
+       it is dense, deliberate work and overlaid type would sit on detail that
+       is meant to be read. Four text elements, CTAs above the fold. -->
+  <section class="relative">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8 grid lg:grid-cols-2 gap-0 items-center lg:min-h-[clamp(30rem,72vh,40rem)]">
+
+      <!-- Mobile leads with the artwork: it is the strongest thing on the page
+           and a letterboxed strip under a headline wasted it. Desktop keeps the
+           copy first, with the art bleeding off the right edge. -->
+      <div class="order-1 lg:order-2 -mx-6 lg:mx-0 lg:absolute lg:inset-y-0 lg:left-1/2 lg:right-0">
+        <Image
+          src={heroStudio}
+          alt="Pixel art of Andrew at his desk at dusk: two monitors of code, a stage piano, a steaming coffee, and pines out the window"
+          widths={[760, 1100, 1656]}
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="w-full h-[52vh] min-h-[19rem] max-h-[30rem] lg:h-full lg:min-h-0 lg:max-h-none object-cover object-center"
+        />
       </div>
-    </a>
+
+      <div class="order-2 lg:order-1 lg:pr-12 pt-9 pb-14 lg:py-0">
+        <h1 class="display text-[2.75rem] leading-[1] sm:text-6xl xl:text-7xl text-ink">
+          Andrew Smith
+        </h1>
+
+        <p class="mt-5 lg:mt-6 text-lg lg:text-xl text-muted max-w-md text-balance">
+          ML engineer, musician, and builder in South Carolina.
+        </p>
+
+        <div class="mt-8 lg:mt-9 flex flex-wrap items-center gap-3">
+          <a href="/feed" class="btn btn-primary">
+            The Feed
+            <Icon name="ph:arrow-right" class="w-4 h-4" />
+          </a>
+          <a href="/orbit" class="btn btn-secondary">Orbit</a>
+        </div>
+      </div>
+
+    </div>
   </section>
 
-  <section class="min-h-[80vh] flex items-center">
-    <div class="max-w-5xl mx-auto px-6 py-20 md:py-32">
-      <div class="grid md:grid-cols-[1fr,1.2fr] gap-12 md:gap-16 items-center">
+  <!-- ===================== THE ODDS =====================
+       Typographic statement section. Andrew's copy, one clause per row, the
+       percentage doing the visual work. -->
+  <section class="border-t border-line">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+      <h2 class="display text-3xl md:text-4xl text-ink mb-12">At any given moment</h2>
 
-        <!-- Photo -->
-        <div class="order-2 md:order-1">
-          <div class="aspect-[4/5] max-w-sm mx-auto md:mx-0">
-            <img
-              src="/media/avatar.png"
-              alt="Andrew Smith"
-              class="w-full h-full object-cover"
-            />
+      <dl class="max-w-2xl">
+        {odds.map((row, i) => (
+          <div class="reveal flex items-baseline gap-6 md:gap-10 py-2" style={`--reveal-delay:${i * 70}ms`}>
+            <dt class="font-mono text-3xl md:text-5xl text-accent tabular-nums shrink-0 w-24 md:w-36 text-right">
+              {row.pct}
+            </dt>
+            <dd class="text-xl md:text-2xl text-ink">{row.what}</dd>
           </div>
-        </div>
+        ))}
+      </dl>
+    </div>
+  </section>
 
-        <!-- Text -->
-        <div class="order-1 md:order-2">
-          <p class="text-warm-gray text-sm tracking-widest uppercase mb-6">
-            South Carolina
-          </p>
+  <!-- ===================== DESTINATIONS =====================
+       An editorial index, not a card grid. No borders and no filled caption
+       bars: the photographs sit directly on the page and the labels are plain
+       type beneath them, so nothing competes with the images. Staggered
+       offsets give the section a diagonal read at desktop and collapse to a
+       single column below md. -->
+  <section class="border-t border-line">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+      <h2 class="display text-3xl md:text-4xl text-ink mb-16 md:mb-20">Have a look around</h2>
 
-          <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-walnut leading-tight mb-8">
-            Andrew Smith
-          </h1>
+      <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-y-14 md:gap-y-16 md:gap-x-8">
+        {destinations.map((d, i) => (
+          <a
+            href={d.href}
+            class:list={["reveal group block", d.place, d.offset]}
+            style={`--reveal-delay:${i * 60}ms`}
+          >
+            {d.image ? (
+              <div class:list={["media-frame", d.ratio]}>
+                <img
+                  src={d.image}
+                  alt={d.alt}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div class:list={[
+                "flex items-end p-6 md:p-7 transition-transform duration-500 group-hover:-translate-y-1",
+                d.panel,
+                d.ratio,
+              ]}>
+                <p class="display text-2xl md:text-3xl text-paper">
+                  {d.feature}
+                </p>
+              </div>
+            )}
 
-          <div class="w-12 h-px bg-cognac mb-8"></div>
-
-          <p class="text-warm-gray leading-relaxed">
-            50% chance I'm doing machine learning · 20% chance I'm playing keys · 20% chance I'm making coffee · 30% chance I'm on Robinhood · 100% chance I'm Andrew
-          </p>
-        </div>
-
+            <div class="flex items-baseline gap-4 mt-5">
+              <h3 class="text-xl md:text-2xl font-medium text-ink group-hover:text-accent transition-colors">
+                {d.label}
+              </h3>
+              <span class="flex-1 h-px bg-line group-hover:bg-accent transition-colors"></span>
+              <Icon
+                name="ph:arrow-up-right"
+                class="w-4 h-4 shrink-0 text-faint group-hover:text-accent transition-all group-hover:-translate-y-0.5"
+              />
+            </div>
+            <p class="mt-2 text-muted max-w-sm">{d.blurb}</p>
+          </a>
+        ))}
       </div>
     </div>
   </section>
-<style>
-  .feed-card {
-    box-shadow: 0 4px 24px rgba(92, 64, 51, 0.15), 0 0 0 1px rgba(200, 121, 65, 0.1);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-  }
 
-  .feed-card:hover {
-    box-shadow: 0 8px 32px rgba(92, 64, 51, 0.25), 0 0 0 1px rgba(200, 121, 65, 0.2);
-    transform: translateY(-2px);
-  }
 
-  .feed-card-bg {
-    background: linear-gradient(135deg, #2D2D2D 0%, #5C4033 50%, #C87941 100%);
-    background-size: 200% 200%;
-    animation: shimmer 6s ease-in-out infinite;
-  }
-
-  @keyframes shimmer {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-</style>
 </Layout>

@@ -31,3 +31,6 @@ e2e/test-results/
 # Orbit: keep heavy iPhone video originals out of the repo (transcoded .mp4 are committed)
 public/media/orbit/**/*.mov
 public/media/orbit/**/*.MOV
+
+# taste-skill (installed per-session via npx skills add)
+.agents/
