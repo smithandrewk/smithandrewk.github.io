@@ -20,9 +20,10 @@ const odds = [
   { pct: '100%', what: "I'm Andrew" },
 ];
 
-// Six destinations, six cells, no empty cells. Spans and heights vary so the
-// grid has rhythm; four carry a real photograph, two are typographic and are
-// filled with real content rather than padded out.
+// Six destinations as an editorial index rather than a card grid. Spans,
+// aspect ratios, and offsets differ so the eye moves diagonally down the page.
+// The two entries without a photograph become solid colour blocks, which gives
+// the section a second texture and keeps the grid mass even.
 const destinations = [
   {
     href: '/feed',
@@ -30,8 +31,9 @@ const destinations = [
     blurb: 'Photos, videos, and moments, full screen.',
     image: '/media/gallery/teton_inside.jpg',
     alt: 'Looking out across the Grand Teton range at dusk',
-    span: 'md:col-span-4',
-    height: 'h-72 md:h-[26rem]',
+    place: 'md:col-span-8',
+    ratio: 'aspect-[3/2]',
+    offset: '',
   },
   {
     href: '/orbit',
@@ -39,8 +41,20 @@ const destinations = [
     blurb: 'A year of driving to see old friends, mapped.',
     image: '/media/orbit/04-24-zenas-griffin-charleston/IMG_8137.jpeg',
     alt: 'A Charleston street at golden hour, on the way to meet Zenas and Griffin',
-    span: 'md:col-span-2',
-    height: 'h-72 md:h-[26rem]',
+    place: 'md:col-span-4',
+    ratio: 'aspect-[3/4]',
+    offset: 'md:mt-20',
+  },
+  {
+    href: '/blog',
+    label: 'Journal',
+    feature: latest?.data.title ?? null,
+    blurb: 'Long-form, when something is worth the words.',
+    image: null,
+    panel: 'bg-ink',
+    place: 'md:col-span-4',
+    ratio: 'aspect-[4/5]',
+    offset: '',
   },
   {
     href: '/gallery',
@@ -48,8 +62,9 @@ const destinations = [
     blurb: 'Everything worth keeping a frame of.',
     image: '/media/gallery/tahoe.jpeg',
     alt: 'Lake Tahoe from the shoreline',
-    span: 'md:col-span-2',
-    height: 'h-72 md:h-80',
+    place: 'md:col-span-7 md:col-start-6',
+    ratio: 'aspect-[16/10]',
+    offset: 'md:mt-20',
   },
   {
     href: '/timeline',
@@ -57,27 +72,20 @@ const destinations = [
     blurb: 'Europe, a gutted house, and a PhD.',
     image: '/media/timeline/europe/IMG_3509.JPG',
     alt: 'The Matterhorn above Zermatt, Switzerland',
-    span: 'md:col-span-2',
-    height: 'h-72 md:h-80',
-  },
-  {
-    href: '/blog',
-    label: 'Journal',
-    // Filled with the actual latest headline, so the typographic cell carries
-    // real content instead of dead space.
-    feature: latest?.data.title ?? null,
-    blurb: 'Long-form, when something is worth the words.',
-    image: null,
-    span: 'md:col-span-2',
-    height: 'md:h-80',
+    place: 'md:col-span-7',
+    ratio: 'aspect-[3/2]',
+    offset: '',
   },
   {
     href: '/consuming',
     label: 'Consuming',
+    feature: 'Hamming, Tolkien, and Lizzy McAlpine',
     blurb: 'The books, records, and podcasts currently in rotation.',
     image: null,
-    span: 'md:col-span-6',
-    height: '',
+    panel: 'bg-accent',
+    place: 'md:col-span-4 md:col-start-9',
+    ratio: 'aspect-[4/5]',
+    offset: 'md:mt-20',
   },
 ];
 ---
@@ -147,25 +155,24 @@ const destinations = [
   </section>
 
   <!-- ===================== DESTINATIONS =====================
-       Bento. Six items, six cells, mixed spans. Four cells carry real
-       photography so it is not a wall of white text tiles. -->
+       An editorial index, not a card grid. No borders and no filled caption
+       bars: the photographs sit directly on the page and the labels are plain
+       type beneath them, so nothing competes with the images. Staggered
+       offsets give the section a diagonal read at desktop and collapse to a
+       single column below md. -->
   <section class="border-t border-line">
     <div class="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
-      <h2 class="display text-3xl md:text-4xl text-ink mb-12">Have a look around</h2>
+      <h2 class="display text-3xl md:text-4xl text-ink mb-16 md:mb-20">Have a look around</h2>
 
-      <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-y-14 md:gap-y-16 md:gap-x-8">
         {destinations.map((d, i) => (
           <a
             href={d.href}
-            class:list={[
-              "reveal group flex flex-col border border-line bg-surface overflow-hidden transition-colors hover:border-line-strong",
-              d.span,
-              d.height,
-            ]}
+            class:list={["reveal group block", d.place, d.offset]}
             style={`--reveal-delay:${i * 60}ms`}
           >
             {d.image ? (
-              <div class="media-frame flex-1 min-h-0">
+              <div class:list={["media-frame", d.ratio]}>
                 <img
                   src={d.image}
                   alt={d.alt}
@@ -174,24 +181,29 @@ const destinations = [
                   class="w-full h-full object-cover"
                 />
               </div>
-            ) : d.feature ? (
-              <div class="flex-1 min-h-0 flex items-center px-5 pt-6">
-                <p class="display text-2xl md:text-3xl text-ink group-hover:text-accent transition-colors">
+            ) : (
+              <div class:list={[
+                "flex items-end p-6 md:p-7 transition-transform duration-500 group-hover:-translate-y-1",
+                d.panel,
+                d.ratio,
+              ]}>
+                <p class="display text-2xl md:text-3xl text-paper">
                   {d.feature}
                 </p>
               </div>
-            ) : null}
+            )}
 
-            <div class="p-5">
-              <div class="flex items-center justify-between gap-4">
-                <h3 class="text-lg font-medium text-ink">{d.label}</h3>
-                <Icon
-                  name="ph:arrow-up-right"
-                  class="w-4 h-4 text-faint group-hover:text-accent transition-colors shrink-0"
-                />
-              </div>
-              <p class="mt-1.5 text-sm text-muted">{d.blurb}</p>
+            <div class="flex items-baseline gap-4 mt-5">
+              <h3 class="text-xl md:text-2xl font-medium text-ink group-hover:text-accent transition-colors">
+                {d.label}
+              </h3>
+              <span class="flex-1 h-px bg-line group-hover:bg-accent transition-colors"></span>
+              <Icon
+                name="ph:arrow-up-right"
+                class="w-4 h-4 shrink-0 text-faint group-hover:text-accent transition-all group-hover:-translate-y-0.5"
+              />
             </div>
+            <p class="mt-2 text-muted max-w-sm">{d.blurb}</p>
           </a>
         ))}
       </div>
