@@ -1,4 +1,6 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 /**
  * /feed: a vertical snap-scroll feed of mixed media content.
  * Photos, text cards, and before/after reveals in a TikTok-style format.
@@ -627,14 +629,8 @@ const feedItems = [
               />
               <div class="overlay" />
               <button class="mute-btn" aria-label="Toggle sound">
-                <svg class="icon-muted" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-                <svg class="icon-unmuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
-                </svg>
+                <Icon class="icon-muted" style="display:none" name="ph:speaker-simple-slash" />
+                <Icon class="icon-unmuted" name="ph:speaker-simple-high" />
               </button>
               <div class="card-info">
                 <div class="card-caption">{item.caption}</div>
@@ -668,20 +664,12 @@ const feedItems = [
               />
               <div class="overlay" />
               <span class="podcast-badge">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
+                <Icon name="ph:microphone" width="12" height="12" />
                 Podcast
               </span>
               <button class="mute-btn" aria-label="Toggle sound">
-                <svg class="icon-muted" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-                <svg class="icon-unmuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
-                </svg>
+                <Icon class="icon-muted" style="display:none" name="ph:speaker-simple-slash" />
+                <Icon class="icon-unmuted" name="ph:speaker-simple-high" />
               </button>
               <div class="card-info">
                 <div class="card-caption">{item.caption}</div>

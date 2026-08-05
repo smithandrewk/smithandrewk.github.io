@@ -39,8 +39,10 @@
   /* --- Ink -------------------------------------------------------------- */
   --color-ink: #141414;
   --color-ink-soft: #3A3A38;
-  --color-muted: #6E6E6B;
-  --color-faint: #9C9C98;
+  /* Dark enough to clear WCAG AA (4.5:1) against --color-surface, not just
+     against --color-paper. Secondary text sits on both. */
+  --color-muted: #63635F;
+  --color-faint: #8A8A86;
 
   /* --- Accent (one, locked, used identically everywhere) ---------------- */
   --color-accent: #1D3FD9;

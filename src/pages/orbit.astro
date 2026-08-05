@@ -618,13 +618,6 @@ const beats = beatCities.map((city, i) => {
     font-family: var(--font-family-mono); font-size: .68rem; letter-spacing: .14em;
     text-transform: uppercase; color: #8E8E8A; margin: .4rem 0 0;
   }
-  .scroll-cue {
-    margin-top: 3.5rem; display: flex; flex-direction: column; align-items: center;
-    gap: .5rem; color: var(--color-muted); font-family: var(--font-family-mono);
-    font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;
-  }
-  .scroll-cue svg { width: 1.1rem; height: 1.1rem; animation: bob 2s ease-in-out infinite; }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
   @media (min-width: 640px) { .hero-stats { grid-template-columns: repeat(4, 1fr); } }
 
   /* ---------- PREMISE ---------- */
@@ -685,7 +678,7 @@ const beats = beatCities.map((city, i) => {
   .arc {
     stroke: var(--red); stroke-width: 2.5; stroke-linecap: round;
     stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0;
-    filter: drop-shadow(0 0 5px rgba(200,68,46,.5));
+    filter: drop-shadow(0 0 5px rgba(29,63,217,.5));
     transition: stroke-dashoffset 1s ease, opacity .5s ease;
   }
   .arc.drawn { stroke-dashoffset: 0; opacity: 1; }
@@ -730,7 +723,7 @@ const beats = beatCities.map((city, i) => {
   }
   .step-miles { color: var(--red); font-weight: 700; }
   .step-count {
-    background: rgba(200,68,46,.1); color: var(--red); padding: .1rem .5rem;
+    background: rgba(29,63,217,.1); color: var(--red); padding: .1rem .5rem;
     border-radius: 999px; letter-spacing: .06em;
   }
   .step-city {
@@ -790,10 +783,10 @@ const beats = beatCities.map((city, i) => {
     transform-origin: bottom; transition: transform .5s ease;
   }
   [data-chart].in .tally { transform: scaleY(1); }
-  .month.current .tally { background: var(--red); opacity: 1; box-shadow: 0 0 10px rgba(200,68,46,.4); }
+  .month.current .tally { background: var(--red); opacity: 1; box-shadow: 0 0 10px rgba(29,63,217,.4); }
   .month-label {
     font-family: var(--font-family-mono); font-size: .6rem; letter-spacing: .04em;
-    color: var(--color-warm-gray-light); text-transform: uppercase;
+    color: var(--color-faint); text-transform: uppercase;
   }
   .month.current .month-label { color: var(--red); font-weight: 700; }
   .month.future { opacity: .4; }
@@ -830,7 +823,7 @@ const beats = beatCities.map((city, i) => {
     background: var(--red); color: var(--color-paper); padding: .2rem .6rem; border-radius: 999px;
     font-weight: 700; letter-spacing: .12em; animation: glow 2.2s ease-in-out infinite;
   }
-  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(200,68,46,.5); } 50% { box-shadow: 0 0 0 6px rgba(200,68,46,0); } }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(29,63,217,.5); } 50% { box-shadow: 0 0 0 6px rgba(29,63,217,0); } }
   .entry-date { color: var(--color-ink); font-weight: 500; }
   .entry-city { color: var(--color-accent); }
   .entry-title { font-family: var(--font-family-sans); font-size: 1.45rem; color: var(--color-ink); margin: 0 0 .25rem; line-height: 1.15; }
@@ -870,7 +863,7 @@ const beats = beatCities.map((city, i) => {
   @media (prefers-reduced-motion: reduce) {
     .reveal, .on-scroll { opacity: 1 !important; transform: none !important; animation: none !important; }
     .arc, .sc-outline, .bar-fill, .tally, .fly-photo { transition: none !important; }
-    .scroll-cue svg, .home-pulse, .node.active .node-halo, .badge { animation: none !important; }
+    .home-pulse, .node.active .node-halo, .badge { animation: none !important; }
   }
 </style>
 
