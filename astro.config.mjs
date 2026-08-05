@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
+import icon from 'astro-icon';
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,7 +11,9 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()]
   },
-  integrations: [mdx()],
+  // Phosphor icons via astro-icon. One icon family for the whole project,
+  // no hand-rolled SVG paths.
+  integrations: [mdx(), icon()],
   markdown: {
     shikiConfig: {
       theme: 'github-dark',

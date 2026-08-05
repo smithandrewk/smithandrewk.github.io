@@ -1,82 +1,37 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 const currentYear = new Date().getFullYear();
+
+const elsewhere = [
+  { href: 'https://github.com/smithandrewk', label: 'GitHub', icon: 'ph:github-logo' },
+  { href: 'mailto:andrewsmith@sc.edu', label: 'Email', icon: 'ph:envelope-simple' },
+];
 ---
 
-<footer class="mt-auto">
-  <div class="max-w-6xl mx-auto px-6 py-16">
-    <div class="border-t border-walnut/10 pt-8">
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs tracking-widest uppercase text-warm-gray">
-        <span>&copy; {currentYear}</span>
+<footer class="mt-auto border-t border-line theme-fade">
+  <div class="max-w-6xl mx-auto px-6 lg:px-8 py-10">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
 
-        <!-- Espresso mode toggle -->
-        <button
-          id="espresso-toggle"
-          class="group relative text-warm-gray-light hover:text-walnut transition-colors"
-          aria-label="Toggle espresso mode"
-          title="Make coffee"
-        >
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Steam curls -->
-            <path class="steam steam-1" d="M9 10c0-1 .5-1.5.5-2.5S9 6 9 5" />
-            <path class="steam steam-2" d="M12 10c0-1 .5-1.5.5-2.5S12 6 12 4" />
-            <path class="steam steam-3" d="M15 10c0-1 .5-1.5.5-2.5S15 6 15 5" />
-            <!-- Cup body -->
-            <path d="M6 11h12v5a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4v-5z" />
-            <!-- Handle -->
-            <path d="M18 12.5h1a2.5 2.5 0 0 1 0 5H18" />
-            <!-- Saucer -->
-            <path d="M5 22h14" />
-          </svg>
-        </button>
-
-        <div class="flex items-center gap-6">
-          <a href="https://github.com/smithandrewk" target="_blank" rel="noopener noreferrer" class="hover:text-walnut transition-colors">
-            GitHub
-          </a>
-          <a href="mailto:andrewsmith@sc.edu" class="hover:text-walnut transition-colors">
-            Email
-          </a>
-        </div>
+      <div>
+        <p class="font-mono text-[0.9375rem] font-medium text-ink">A. Smith</p>
+        <p class="meta mt-1.5">&copy; {currentYear}</p>
       </div>
+
+      <div class="flex items-center gap-6">
+        {elsewhere.map(item => (
+          <a
+            href={item.href}
+            target={item.href.startsWith('http') ? '_blank' : undefined}
+            rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+            class="group inline-flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors"
+          >
+            <Icon name={item.icon} class="w-[18px] h-[18px]" />
+            {item.label}
+          </a>
+        ))}
+      </div>
+
     </div>
   </div>
 </footer>
-
-<style>
-  .steam {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  #espresso-toggle:hover .steam,
-  :global(html.espresso) .steam {
-    opacity: 1;
-    animation: steam-rise 1.5s ease-in-out infinite;
-  }
-
-  .steam-1 { animation-delay: 0s; }
-  .steam-2 { animation-delay: 0.3s; }
-  .steam-3 { animation-delay: 0.6s; }
-
-  #espresso-toggle:hover .steam-1,
-  :global(html.espresso) .steam-1 { animation-delay: 0s; }
-  #espresso-toggle:hover .steam-2,
-  :global(html.espresso) .steam-2 { animation-delay: 0.3s; }
-  #espresso-toggle:hover .steam-3,
-  :global(html.espresso) .steam-3 { animation-delay: 0.6s; }
-
-  @keyframes steam-rise {
-    0% {
-      transform: translateY(0) scaleY(1);
-      opacity: 0.7;
-    }
-    50% {
-      transform: translateY(-2px) scaleY(1.1);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-4px) scaleY(1.2);
-      opacity: 0;
-    }
-  }
-</style>
