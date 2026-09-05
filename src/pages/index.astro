@@ -1,9 +1,8 @@
 ---
-import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
-import heroStudio from '../assets/hero-studio.png';
+import VoxelPortrait from '../components/VoxelPortrait.astro';
 
 const posts = await getCollection('blog');
 const latest = posts
@@ -95,49 +94,23 @@ const destinations = [
   description="Andrew Smith - ML engineer, musician, and builder in South Carolina."
 >
 
-  <!-- ===================== HERO =====================
-       The artwork bleeds off the right edge of the viewport while the copy
-       stays on the page grid at left. Nothing is set on top of the pixel art:
-       it is dense, deliberate work and overlaid type would sit on detail that
-       is meant to be read. Four text elements, CTAs above the fold. -->
-  <section class="relative">
-    <div class="max-w-6xl mx-auto px-6 lg:px-8 grid lg:grid-cols-2 gap-0 items-center lg:min-h-[clamp(30rem,72vh,40rem)]">
+  <VoxelPortrait>
+    <h1 id="hero-title" class="display text-[2.75rem] leading-[1] sm:text-6xl xl:text-7xl text-ink">
+      Andrew Smith
+    </h1>
 
-      <!-- Mobile leads with the artwork: it is the strongest thing on the page
-           and a letterboxed strip under a headline wasted it. Desktop keeps the
-           copy first, with the art bleeding off the right edge. -->
-      <div class="order-1 lg:order-2 -mx-6 lg:mx-0 lg:absolute lg:inset-y-0 lg:left-1/2 lg:right-0">
-        <Image
-          src={heroStudio}
-          alt="Pixel art of Andrew at his desk at dusk: two monitors of code, a stage piano, a steaming coffee, and pines out the window"
-          widths={[760, 1100, 1656]}
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          loading="eager"
-          fetchpriority="high"
-          class="w-full h-[52vh] min-h-[19rem] max-h-[30rem] lg:h-full lg:min-h-0 lg:max-h-none object-cover object-center"
-        />
-      </div>
+    <p class="mt-4 lg:mt-6 text-lg lg:text-xl text-muted max-w-md text-balance">
+      ML engineer, musician, and builder in South Carolina.
+    </p>
 
-      <div class="order-2 lg:order-1 lg:pr-12 pt-9 pb-14 lg:py-0">
-        <h1 class="display text-[2.75rem] leading-[1] sm:text-6xl xl:text-7xl text-ink">
-          Andrew Smith
-        </h1>
-
-        <p class="mt-5 lg:mt-6 text-lg lg:text-xl text-muted max-w-md text-balance">
-          ML engineer, musician, and builder in South Carolina.
-        </p>
-
-        <div class="mt-8 lg:mt-9 flex flex-wrap items-center gap-3">
-          <a href="/feed" class="btn btn-primary">
-            The Feed
-            <Icon name="ph:arrow-right" class="w-4 h-4" />
-          </a>
-          <a href="/orbit" class="btn btn-secondary">Orbit</a>
-        </div>
-      </div>
-
+    <div class="mt-6 lg:mt-9 flex flex-wrap items-center gap-3">
+      <a href="/feed" class="btn btn-primary">
+        The Feed
+        <Icon name="ph:arrow-right" class="w-4 h-4" />
+      </a>
+      <a href="/orbit" class="btn btn-secondary">Orbit</a>
     </div>
-  </section>
+  </VoxelPortrait>
 
   <!-- ===================== THE ODDS =====================
        Typographic statement section. Andrew's copy, one clause per row, the
