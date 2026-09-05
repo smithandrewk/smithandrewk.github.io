@@ -279,7 +279,7 @@ export function mountPortrait(track) {
       h = stage.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
-    const worldHeight = 82,
+    const worldHeight = 76,
       worldWidth = (worldHeight * w) / h;
     camera.left = -worldWidth / 2;
     camera.right = worldWidth / 2;
