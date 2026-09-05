@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { figureData } from "./figure-data.js";
+import { bindPortraitRotation } from "./rotation-input.js";
 import {
   makePieces,
   piecePose,
@@ -12,13 +13,10 @@ export function mountPortrait(track) {
   const stage = track.querySelector("[data-voxel-stage]");
   const sticky = track.querySelector("[data-voxel-sticky]");
   const fallback = track.querySelector("[data-voxel-fallback]");
-  const controls = track.querySelector("[data-voxel-controls]");
-  const status = track.querySelector("[data-voxel-status]");
-  const finishButton = track.querySelector("[data-voxel-finish]");
-  const rotateButton = track.querySelector("[data-voxel-rotate]");
-  const angleControls = track.querySelector("[data-voxel-angle-controls]");
-  const angle = track.querySelector("[data-voxel-angle]");
-  const announcement = track.querySelector("[data-voxel-announcement]");
+  const hints = track.querySelector("[data-voxel-hints]");
+  const scrollHint = track.querySelector("[data-voxel-scroll-hint]");
+  const scrollLabel = track.querySelector("[data-voxel-scroll-label]");
+  const help = track.querySelector("[data-voxel-help]");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const events = new AbortController();
   const renderer = new THREE.WebGLRenderer({
@@ -218,8 +216,6 @@ export function mountPortrait(track) {
     raf = 0,
     lastTime = 0,
     isVisible = true,
-    orbitEnabled = false,
-    drag = null,
     disposed = false;
   function scrollBounds() {
     const pinTop = parseFloat(getComputedStyle(sticky).top) || 0;
@@ -249,19 +245,10 @@ export function mountPortrait(track) {
     renderer.render(scene, camera);
     const assembly = clamp(progress / assemblyEnd);
     track.dataset.progress = String(Math.round(assembly * 100));
-    status.textContent =
-      assembly >= 1
-        ? "Assembled"
-        : assembly > 0.03
-          ? "Falling into place"
-          : "Scroll to assemble";
-    finishButton.textContent = assembly >= 1 ? "Replay" : "Assemble";
-    finishButton.setAttribute(
-      "aria-label",
-      assembly >= 1 ? "Replay portrait assembly" : "Assemble portrait",
-    );
+    scrollLabel.textContent =
+      assembly >= 1 ? "Scroll up to replay" : "Scroll to assemble";
     fallback.hidden = true;
-    controls.hidden = false;
+    hints.hidden = false;
     track.dataset.ready = "true";
     if (Math.abs(desired - progress) > 0.00008) requestDraw();
   }
@@ -271,7 +258,9 @@ export function mountPortrait(track) {
   }
   function onScroll() {
     if (!isVisible) return;
-    desired = measureProgress();
+    const next = measureProgress();
+    if (Math.abs(next - desired) > 0.003) track.dataset.scrollUsed = "true";
+    desired = next;
     requestDraw();
   }
   function resize() {
@@ -289,92 +278,37 @@ export function mountPortrait(track) {
     desired = measureProgress();
     requestDraw();
   }
-  function setOrbit(enabled) {
-    orbitEnabled = enabled;
-    rotateButton.setAttribute("aria-pressed", String(enabled));
-    rotateButton.textContent = enabled ? "Done" : "Rotate";
-    angleControls.hidden = !enabled;
-    stage.toggleAttribute("data-rotating", enabled);
-    announcement.textContent = enabled
-      ? "Drag sideways or use the slider to turn the portrait."
-      : "Rotation controls closed.";
-  }
-  function resetView() {
-    setOrbit(false);
-    yaw = (-24 * Math.PI) / 180;
-    elevation = 0.22;
-    angle.value = "-24";
-    drag = null;
+  function setYaw(value) {
+    yaw = clamp(value, -Math.PI, Math.PI);
+    const degrees = Math.round((yaw * 180) / Math.PI);
+    stage.setAttribute("aria-valuenow", String(degrees));
+    stage.setAttribute("aria-valuetext", `${degrees} degrees`);
     requestDraw();
   }
-  finishButton.addEventListener(
-    "click",
-    () => {
-      const complete = progress >= assemblyEnd - 0.001;
-      const { top, travel } = scrollBounds();
-      if (complete) resetView();
-      window.scrollTo({
-        top: Math.max(0, top + (complete ? 0 : travel * (assemblyEnd + 0.015))),
-        behavior: "smooth",
-      });
+  // The stage is the rotation control, so keyboard users need no extra buttons.
+  stage.tabIndex = 0;
+  stage.setAttribute("role", "slider");
+  stage.setAttribute("aria-label", "Rotate Andrew's 3D portrait");
+  stage.setAttribute("aria-orientation", "horizontal");
+  stage.setAttribute("aria-valuemin", "-180");
+  stage.setAttribute("aria-valuemax", "180");
+  stage.setAttribute("aria-describedby", "portrait-help");
+  setYaw(yaw);
+
+  bindPortraitRotation(stage, {
+    getAngle: () => yaw,
+    setAngle: setYaw,
+    onInteract: () => {
+      track.dataset.dragUsed = "true";
     },
-    { signal: events.signal },
-  );
-  rotateButton.addEventListener("click", () => setOrbit(!orbitEnabled), {
     signal: events.signal,
   });
-  angle.addEventListener(
-    "input",
-    () => {
-      yaw = (Number(angle.value) * Math.PI) / 180;
-      requestDraw();
-    },
-    { signal: events.signal },
-  );
-  track.addEventListener(
-    "keydown",
-    (e) => {
-      if (e.key === "Escape" && orbitEnabled) {
-        setOrbit(false);
-        drag = null;
-        rotateButton.focus();
-      }
-    },
-    { signal: events.signal },
-  );
-  stage.addEventListener(
-    "pointerdown",
-    (e) => {
-      if (!orbitEnabled) return;
-      drag = { x: e.clientX };
-      stage.setPointerCapture(e.pointerId);
-    },
-    { signal: events.signal },
-  );
-  stage.addEventListener(
-    "pointermove",
-    (e) => {
-      if (!drag) return;
-      yaw -= (e.clientX - drag.x) * 0.006;
-      yaw =
-        ((((yaw + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) -
-        Math.PI;
-      angle.value = String(Math.round((yaw * 180) / Math.PI));
-      drag = { x: e.clientX };
-      requestDraw();
-    },
-    { signal: events.signal },
-  );
-  for (const name of ["pointerup", "pointercancel", "lostpointercapture"])
-    stage.addEventListener(
-      name,
-      () => {
-        drag = null;
-      },
-      { signal: events.signal },
-    );
+
   function applyMotionPreference() {
-    finishButton.hidden = reducedMotion.matches;
+    scrollHint.hidden = reducedMotion.matches;
+    help.textContent = reducedMotion.matches
+      ? "Drag sideways or use the arrow keys to rotate. Escape resets the view."
+      : "Drag sideways or use the arrow keys to rotate. Scroll or use Page Up and Page Down to assemble. Escape resets the view.";
     desired = measureProgress();
     if (reducedMotion.matches) progress = 1;
     resize();
@@ -395,6 +329,7 @@ export function mountPortrait(track) {
   const visibilityObserver = new IntersectionObserver(
     (entries) => {
       isVisible = entries[0].isIntersecting;
+      track.dataset.visible = String(isVisible);
       if (isVisible) {
         lastTime = 0;
         onScroll();
@@ -463,7 +398,20 @@ export function mountPortrait(track) {
       e.preventDefault();
       dispose();
       fallback.hidden = false;
-      controls.hidden = true;
+      hints.hidden = true;
+      stage.tabIndex = -1;
+      stage.setAttribute("role", "img");
+      stage.setAttribute("aria-label", "Andrew Smith");
+      for (const attribute of [
+        "aria-valuenow",
+        "aria-valuetext",
+        "aria-valuemin",
+        "aria-valuemax",
+        "aria-orientation",
+        "aria-describedby",
+      ])
+        stage.removeAttribute(attribute);
+      delete track.dataset.ready;
       track.dataset.unavailable = "true";
     },
     { signal: events.signal },

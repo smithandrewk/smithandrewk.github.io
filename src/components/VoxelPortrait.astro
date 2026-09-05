@@ -25,25 +25,23 @@
         />
       </div>
 
-      <div class="portrait-toolbar" data-voxel-controls hidden>
-        <p class="portrait-status" data-voxel-status>Scroll to assemble</p>
-        <div class="portrait-actions">
-          <button type="button" class="portrait-button" data-voxel-finish>Assemble</button>
-          <button
-            type="button"
-            class="portrait-button"
-            data-voxel-rotate
-            aria-pressed="false"
-            aria-controls="portrait-angle-controls"
-          >Rotate</button>
-        </div>
-        <div id="portrait-angle-controls" class="portrait-angle" data-voxel-angle-controls hidden>
-          <label for="portrait-angle">Turn the portrait</label>
-          <input id="portrait-angle" data-voxel-angle type="range" min="-180" max="180" value="-24" />
-          <span>Drag sideways, or use the slider. Escape to close.</span>
-        </div>
+      <div class="portrait-hints" data-voxel-hints hidden>
+        <span class="portrait-hint portrait-scroll" data-voxel-scroll-hint>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4" />
+          </svg>
+          <span data-voxel-scroll-label>Scroll to assemble</span>
+        </span>
+        <span class="portrait-hint portrait-drag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4" />
+          </svg>
+          <span>Drag to rotate</span>
+        </span>
       </div>
-      <span class="portrait-announcement" data-voxel-announcement aria-live="polite"></span>
+      <span id="portrait-help" class="portrait-help" data-voxel-help>
+        Drag sideways or use the arrow keys to rotate. Scroll or use Page Up and Page Down to assemble. Escape resets the view.
+      </span>
     </div>
   </div>
 </section>
@@ -70,35 +68,30 @@
   }
   .portrait-copy { min-width: 0; order: 2; }
   .portrait-art { position: relative; min-width: 0; min-height: 0; order: 1; }
-  .portrait-stage { position: absolute; inset: 0 0 4rem; touch-action: pan-y; overflow: hidden; }
+  .portrait-stage { position: absolute; inset: 0 0 3rem; touch-action: pan-y pinch-zoom; overflow: hidden; }
   .portrait-stage :global(canvas) { display: block; width: 100%; height: 100%; }
-  .portrait-stage[data-rotating] { cursor: grab; }
-  .portrait-stage[data-rotating]:active { cursor: grabbing; }
+  .portrait-track[data-ready] .portrait-stage { cursor: grab; }
+  .portrait-stage[data-dragging] { cursor: grabbing; }
+  .portrait-stage:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; border-radius: var(--radius-control); }
   .portrait-fallback { width: 100%; height: 100%; object-fit: contain; object-position: center; }
-  .portrait-toolbar {
+  .portrait-hints {
     position: absolute; inset: auto 0 0;
-    display: flex; justify-content: space-between; align-items: center; gap: .75rem;
-    min-height: 3rem; border-top: 1px solid var(--color-line); padding-top: .75rem;
+    display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
+    gap: .5rem 1.5rem; min-height: 2rem;
+    color: var(--color-muted); font-size: .75rem;
   }
-  .portrait-toolbar[hidden], .portrait-angle[hidden], .portrait-fallback[hidden] { display: none; }
-  .portrait-status { margin: 0; font-size: .8125rem; color: var(--color-muted); }
-  .portrait-actions { display: flex; gap: .375rem; }
-  .portrait-button {
-    font: inherit; font-size: .8125rem; min-height: 2.75rem; padding: .5rem .75rem;
-    color: var(--color-ink); background: var(--color-paper);
-    border: 1px solid var(--color-line-strong); border-radius: var(--radius-control); cursor: pointer;
+  .portrait-hints[hidden], .portrait-hint[hidden], .portrait-fallback[hidden] { display: none; }
+  .portrait-hint { display: inline-flex; align-items: center; gap: .375rem; white-space: nowrap; }
+  .portrait-hint svg { width: 1.125rem; height: 1.125rem; color: var(--color-accent); animation: portrait-cue 3s ease-in-out infinite; }
+  .portrait-drag svg { animation-delay: 1.5s; }
+  .portrait-track[data-scroll-used] .portrait-scroll svg,
+  .portrait-track[data-drag-used] .portrait-drag svg { animation: none; opacity: .7; }
+  .portrait-track[data-visible="false"] .portrait-hint svg { animation-play-state: paused; }
+  .portrait-help { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  @keyframes portrait-cue {
+    0%, 100% { opacity: .4; }
+    50% { opacity: 1; }
   }
-  .portrait-button:hover { background: var(--color-surface); border-color: var(--color-ink); }
-  .portrait-button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-paper); }
-  .portrait-angle {
-    position: absolute; right: 0; bottom: 4rem; width: min(16rem, 100%);
-    background: var(--color-paper); border: 1px solid var(--color-line-strong);
-    border-radius: var(--radius-control); padding: 1rem; box-shadow: var(--shadow-md);
-    color: var(--color-ink); font-size: .875rem;
-  }
-  .portrait-angle input { display: block; width: 100%; height: 2.75rem; accent-color: var(--color-accent); }
-  .portrait-angle span { font-size: .75rem; color: var(--color-muted); line-height: 1.5; display: block; }
-  .portrait-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .portrait-track[data-unavailable] { min-height: 0 !important; }
   @media (min-width: 768px) {
     .portrait-sticky {
@@ -115,6 +108,7 @@
     .portrait-sticky { padding-inline: 2rem; gap: 3rem; }
   }
   @media (prefers-reduced-motion: reduce) {
+    .portrait-hint svg { animation: none; }
     :global(html.js) .portrait-track { min-height: 0; }
     .portrait-sticky { position: relative; top: 0; }
   }
