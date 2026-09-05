@@ -4,6 +4,7 @@ import { Icon } from 'astro-icon/components';
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import heroStudio from '../assets/hero-studio.png';
+import VoxelPortrait from '../components/VoxelPortrait.astro';
 
 const posts = await getCollection('blog');
 const latest = posts
@@ -143,19 +144,22 @@ const destinations = [
        Typographic statement section. Andrew's copy, one clause per row, the
        percentage doing the visual work. -->
   <section class="border-t border-line">
-    <div class="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
-      <h2 class="display text-3xl md:text-4xl text-ink mb-12">At any given moment</h2>
+    <div class="about-portrait max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+      <div class="about-copy">
+        <h2 class="display text-3xl md:text-4xl text-ink mb-12">At any given moment</h2>
 
-      <dl class="max-w-2xl">
-        {odds.map((row, i) => (
-          <div class="reveal flex items-baseline gap-6 md:gap-10 py-2" style={`--reveal-delay:${i * 70}ms`}>
-            <dt class="font-mono text-3xl md:text-5xl text-accent tabular-nums shrink-0 w-24 md:w-36 text-right">
-              {row.pct}
-            </dt>
-            <dd class="text-xl md:text-2xl text-ink">{row.what}</dd>
-          </div>
-        ))}
-      </dl>
+        <dl class="max-w-2xl">
+          {odds.map((row, i) => (
+            <div class="reveal flex items-baseline gap-6 md:gap-10 py-2" style={`--reveal-delay:${i * 70}ms`}>
+              <dt class="font-mono text-3xl md:text-5xl text-accent tabular-nums shrink-0 w-24 md:w-36 text-right">
+                {row.pct}
+              </dt>
+              <dd class="text-xl md:text-2xl text-ink">{row.what}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <VoxelPortrait />
     </div>
   </section>
 
@@ -217,3 +221,15 @@ const destinations = [
 
 
 </Layout>
+
+<style>
+  .about-portrait { display: grid; gap: 3rem; align-items: start; }
+  @media (min-width: 1024px) {
+    .about-portrait { grid-template-columns: minmax(0, 1.16fr) minmax(0, 1fr); gap: 3rem; }
+    .about-copy { position: sticky; top: 7rem; padding-block: 2rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .about-portrait { align-items: center; }
+    .about-copy { position: static; }
+  }
+</style>

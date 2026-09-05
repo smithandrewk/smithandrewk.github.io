@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "test:portrait": "node --test tests/voxel-motion.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -15,6 +16,7 @@
     "astro": "^5.16.6",
     "astro-icon": "^1.1.5",
     "geist": "^1.7.2",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "three": "0.160.1"
   }
 }
