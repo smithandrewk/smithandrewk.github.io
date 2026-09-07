@@ -4,7 +4,7 @@ import { stableViewport, bindPortraitViewport } from "../src/scripts/voxel/viewp
 import { scrollProgress } from "../src/scripts/voxel/motion.js";
 
 const phone = { width: 390, height: 844, mobile: true, orientation: "portrait-primary" };
-const bounds = ({ height }) => ({ track: height * 3.2 - 64, sticky: Math.max(768, height - 64) });
+const bounds = ({ height }) => ({ track: height * 4.4 - 64, sticky: Math.max(768, height - 64) });
 
 test("toolbar expansion and collapse cannot move the end of the Moog scene", () => {
   let viewport = stableViewport(undefined, phone);
