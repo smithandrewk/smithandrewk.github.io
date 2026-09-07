@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bindInstrumentInput } from '../src/scripts/voxel/instrument-input.js';
-import { createSynth, noteFrequency, filterFrequency } from '../src/scripts/voxel/synth.js';
+import { createSynth, noteFrequency, filterFrequency, AUDIO_TAIL_SECONDS } from '../src/scripts/voxel/synth.js';
 import { makeMoogData } from '../src/scripts/voxel/moog-data.js';
 import { createPlaybackSession } from '../src/scripts/voxel/playback-session.js';
 import { portraitChapters, createPlayDiscovery } from '../src/scripts/voxel/play-discovery.js';
@@ -90,10 +90,11 @@ function audioHarness(deferred = false, playbackSession) {
   };
   const gains = [], oscillators = [];
   const context = {
-    state: 'suspended', currentTime: 0, destination: node(),
+    state: 'suspended', currentTime: 0, sampleRate: 44100, destination: node(),
+    createBuffer(channels, length) { const data = Array.from({ length: channels }, () => new Float32Array(length)); return { getChannelData: channel => data[channel] }; },
     createGain() { const n = node(); gains.push(n); return n; },
     createOscillator() { const n = node(); oscillators.push(n); return n; },
-    createBiquadFilter: node, createDynamicsCompressor: node, createAnalyser: node, createDelay: node,
+    createBiquadFilter: node, createDynamicsCompressor: node, createAnalyser: node, createConvolver: node,
     resume() { if (deferred) return new Promise(resolve => resume = () => { context.state = 'running'; resolve(); }); context.state = 'running'; return Promise.resolve(); },
     suspend() { context.state = 'suspended'; return Promise.resolve(); },
     close() { context.state = 'closed'; return Promise.resolve(); },
@@ -138,6 +139,8 @@ test('music playback is claimed on the first note, then the prior session is res
   assert.equal(h.gains[0].gain.value, .24);
   h.synth.noteOff('finger');
   await new Promise(resolve => setTimeout(resolve, 1150));
+  assert.equal(audioSession.type, 'playback'); assert.equal(h.context.state, 'running');
+  await new Promise(resolve => setTimeout(resolve, AUDIO_TAIL_SECONDS * 1000 - 1100));
   assert.equal(audioSession.type, 'auto'); assert.equal(h.context.state, 'suspended');
   h.synth.dispose();
 });
@@ -160,7 +163,7 @@ test('a new touch arriving during idle suspension resumes without losing playbac
   });
   try {
     h.synth.noteOn(60, 'finger'); await Promise.resolve(); h.synth.noteOff('finger');
-    await new Promise(resolve => setTimeout(resolve, 1150));
+    await new Promise(resolve => setTimeout(resolve, AUDIO_TAIL_SECONDS * 1000 + 50));
     assert.equal(typeof finishSuspending, 'function');
     h.synth.noteOn(67, 'finger'); finishSuspending(); await Promise.resolve();
     assert.equal(h.context.state, 'running'); assert.equal(h.synth.note, 67);

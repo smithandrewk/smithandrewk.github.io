@@ -1,4 +1,4 @@
-import { createSynth, filterFrequency, noteName } from './synth.js';
+import { createSynth, filterFrequency, noteName, AUDIO_TAIL_SECONDS } from './synth.js';
 import { bindInstrumentInput } from './instrument-input.js';
 import { createPlayDiscovery } from './play-discovery.js';
 
@@ -24,11 +24,11 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
   const state = { focus: 0, cutoff: .52, depths: new Float32Array(37), leftX: 0, rightX: 0, leftPress: 0, rightPress: 0, wave: null, moving: false };
   let open = false, available = false, tail = 0, enteredAtScroll = 0, projected = null;
   let leftTarget = 0, rightTarget = 0, tapTimer, lastNote = null;
-  function release(id) { if (synth.noteOff(id)) { tail = 1.1; requestDraw(); } }
+  function release(id) { if (synth.noteOff(id)) { tail = AUDIO_TAIL_SECONDS; requestDraw(); } }
   function press(midi, id, tap = false) {
     if (!open || !available) return;
     if (tap) clearTimeout(tapTimer);
-    synth.noteOn(midi, id); tail = 1.1; lastNote = midi;
+    synth.noteOn(midi, id); tail = AUDIO_TAIL_SECONDS; lastNote = midi;
     const key = performance.keyData.find(key => key.midi === midi);
     if (key.x >= 0) leftTarget = key.x - 4.8; else rightTarget = key.x + 4.8;
     status.textContent = '';
@@ -37,7 +37,7 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
   }
   function stop() {
     for (const cancel of cancellers) cancel();
-    clearTimeout(tapTimer); synth.silence(); tail = 1.1; requestDraw();
+    clearTimeout(tapTimer); synth.silence(); tail = AUDIO_TAIL_SECONDS; requestDraw();
   }
   function setOpen(value, focus = false) {
     open = Boolean(value && available);
