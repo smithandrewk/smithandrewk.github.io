@@ -1,7 +1,11 @@
+import { bindPortraitViewport } from "./voxel/viewport.js";
+
 export function observePortrait() {
   const track = document.querySelector<HTMLElement>("[data-voxel-track]");
   if (!track || track.dataset.observed) return;
   track.dataset.observed = "true";
+  // Stabilize layout before loading WebGL, so scrolling during that load is safe too.
+  bindPortraitViewport(track);
 
   // Keep the Three.js renderer and sculpture data out of the hero's critical path.
   const observer = new IntersectionObserver(
