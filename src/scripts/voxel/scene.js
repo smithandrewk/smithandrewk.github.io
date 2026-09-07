@@ -296,12 +296,19 @@ export function mountPortrait(track) {
     desired = next;
     requestDraw();
   }
+  let renderedWidth = 0, renderedHeight = 0;
   function resize() {
     const w = stage.clientWidth,
       h = stage.clientHeight;
     if (!w || !h) return;
-    renderer.setSize(w, h, false);
-    aspect = w / h;
+    // Host toolbar animations can emit resize without changing our locked stage.
+    // Reassigning the canvas dimensions would unnecessarily clear its drawing buffer.
+    if (w !== renderedWidth || h !== renderedHeight) {
+      renderer.setSize(w, h, false);
+      aspect = w / h;
+      renderedWidth = w;
+      renderedHeight = h;
+    }
     desired = measureProgress();
     requestDraw();
   }

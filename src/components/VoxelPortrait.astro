@@ -57,12 +57,12 @@
 </script>
 
 <style>
-  .portrait-track { position: relative; min-width: 0; }
-  :global(html.js) .portrait-track { min-height: calc(320svh - 4rem); }
+  .portrait-track { position: relative; min-width: 0; overflow-anchor: none; }
+  :global(html.js) .portrait-track { min-height: calc(var(--portrait-viewport-height, 100svh) * 3.2 - 4rem); }
   .portrait-sticky {
     position: sticky;
     top: 4rem;
-    height: calc(100svh - 4rem);
+    height: calc(var(--portrait-viewport-height, 100svh) - 4rem);
     min-height: 48rem;
     max-width: 72rem;
     margin-inline: auto;
