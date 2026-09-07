@@ -25,6 +25,11 @@
         />
       </div>
 
+      <p class="performance-caption" data-performance-caption hidden>
+        <span><b>20%</b> playing keys.</span>
+        <small>Moog Subsequent 37</small>
+      </p>
+
       <div class="portrait-hints" data-voxel-hints hidden>
         <span class="portrait-hint portrait-scroll" data-voxel-scroll-hint>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -40,7 +45,7 @@
         </span>
       </div>
       <span id="portrait-help" class="portrait-help" data-voxel-help>
-        Drag sideways or use the arrow keys to rotate. Scroll or use Page Up and Page Down to assemble. Escape resets the view.
+        Drag sideways or use the arrow keys to rotate. Scroll or use Page Up and Page Down to assemble the portrait, then take a seat at a Moog Subsequent 37. Escape resets the view.
       </span>
     </div>
   </div>
@@ -53,7 +58,7 @@
 
 <style>
   .portrait-track { position: relative; min-width: 0; }
-  :global(html.js) .portrait-track { min-height: calc(200svh - 4rem); }
+  :global(html.js) .portrait-track { min-height: calc(320svh - 4rem); }
   .portrait-sticky {
     position: sticky;
     top: 4rem;
@@ -74,6 +79,11 @@
   .portrait-stage[data-dragging] { cursor: grabbing; }
   .portrait-stage:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; border-radius: var(--radius-control); }
   .portrait-fallback { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+  .performance-caption { position: absolute; top: .5rem; inset-inline: 0; text-align: center; pointer-events: none; color: var(--color-ink); line-height: 1.3; }
+  .performance-caption[hidden] { display: none; }
+  .performance-caption span { font-size: 1rem; letter-spacing: -.02em; }
+  .performance-caption b { font-family: var(--font-mono); font-weight: 400; color: var(--color-accent); margin-right: .25rem; }
+  .performance-caption small { display: block; margin-top: .35rem; font-family: var(--font-mono); color: var(--color-muted); font-size: .6rem; letter-spacing: .13em; text-transform: uppercase; }
   .portrait-hints {
     position: absolute; inset: auto 0 0;
     display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
