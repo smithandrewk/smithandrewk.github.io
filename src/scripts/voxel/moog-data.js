@@ -36,12 +36,12 @@ export function makeMoogData() {
   // The keybed: C to C over three octaves. Bass is on the player's left (+X).
   for (let j = 0; j < 22; j++) {
     const x = 8.55 - j * .84;
-    keys.push({ x, black: false });
+    keys.push({ x, black: false, midi: 48 + Math.floor(j / 7) * 12 + [0, 2, 4, 5, 7, 9, 11][j % 7] });
     for (let row = 0; row < 6; row++) put([x, 24.05, 4.25 + row * .75], [.815, .43, .755], "#f1eee2", "key", identity, j);
   }
   for (let octave = 0; octave < 3; octave++) for (let gap of [0, 1, 3, 4, 5]) {
     const x = 8.55 - (octave * 7 + gap + .5) * .84;
-    const id = keys.length; keys.push({ x, black: true });
+    const id = keys.length; keys.push({ x, black: true, midi: 48 + octave * 12 + [1, 3, 0, 6, 8, 10][gap] });
     for (let row = 0; row < 3; row++) put([x, 24.55, 7.02 + row * .73], [.49, .65, .75], black, "key", identity, id);
   }
   // Two rubber performance wheels in the recessed left block.
@@ -62,6 +62,7 @@ export function makeMoogData() {
     put([x, panelY(z) + .38, z - .11], [size, .56, size], black, "knob", panelRotation);
     put([x, panelY(z) + .67, z - .23], [size * .8, .07, size * .8], silver, "knob", panelRotation);
     put([x, panelY(z) + .72, z - .36], [.08, .04, size * .38], "#ede7d4", "knob", panelRotation);
+    if (large) for (const block of blocks.slice(-3)) block.control = "cutoff";
   });
   // LCD and menu buttons at the player's upper left.
   put([9.3, panelY(14.9) + .17, 14.9], [2.35, .18, 1.35], "#101819", "display", panelRotation);
@@ -105,5 +106,5 @@ export function makeMoogData() {
     const t = i / 34 * Math.PI * 2;
     put([-8.1 + Math.cos(t) * 2.3, .18, 15.5 + Math.sin(t) * 1.4], [.3, .2, .3], black, "cable");
   }
-  return { blocks, keys, knobCount: knobs.length };
+  return { blocks, keys, knobCount: knobs.length, cutoff: [-2.55, panelY(11.9) + .4, 11.79] };
 }

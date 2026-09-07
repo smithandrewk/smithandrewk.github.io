@@ -84,3 +84,33 @@ test("reduced motion shows the original statue and idle gestures come to rest", 
   assert.deepEqual(playingGesture(6.4), playingGesture(20));
   geometry.dispose(); material.dispose();
 });
+
+test('playing a key depresses only that note and release restores its geometry', () => {
+  const scene = new THREE.Scene(), geometry = new THREE.BoxGeometry(), material = new THREE.MeshStandardMaterial();
+  const performance = createPerformanceScene(scene, geometry, material, figureData), data = makeMoogData();
+  const mesh = scene.children.find(mesh => mesh.count === data.blocks.length);
+  const index = data.keys.findIndex(key => key.midi === 60), block = data.blocks.findIndex(block => block.key === index);
+  const interaction = { focus: 1, depths: new Float32Array(37), cutoff: .52, moving: true, leftX: 0, rightX: 0, leftPress: 0, rightPress: 0 };
+  performance.update(1, performanceTimeline(1), 3.6, 6.4, false, interaction);
+  const rest = new THREE.Matrix4(), pressed = new THREE.Matrix4(), released = new THREE.Matrix4(); mesh.getMatrixAt(block, rest);
+  interaction.depths[index] = 1;
+  performance.update(1, performanceTimeline(1), 3.6, 6.4, false, interaction); mesh.getMatrixAt(block, pressed);
+  assert.ok(Math.abs(rest.elements[13] - pressed.elements[13] - .32) < .00001);
+  interaction.depths[index] = 0;
+  performance.update(1, performanceTimeline(1), 3.6, 6.4, false, interaction); mesh.getMatrixAt(block, released);
+  assert.deepEqual(released.elements, rest.elements);
+  geometry.dispose(); material.dispose();
+});
+
+test('the physical key hit regions resolve every chromatic note from the player camera', () => {
+  const scene = new THREE.Scene(), geometry = new THREE.BoxGeometry(), material = new THREE.MeshStandardMaterial();
+  const performance = createPerformanceScene(scene, geometry, material, figureData);
+  const camera = new THREE.OrthographicCamera(-15, 15, 15, -15, .1, 500), target = new THREE.Vector3(0, 24.5, 11.5);
+  camera.position.set(target.x + Math.sin(-Math.PI + .12) * Math.cos(1.43) * 175, target.y + Math.sin(1.43) * 175, target.z + Math.cos(-Math.PI + .12) * Math.cos(1.43) * 175);
+  camera.lookAt(target); camera.updateMatrixWorld();
+  for (const key of performance.keyData) {
+    const point = new THREE.Vector3(key.x, key.black ? 24.9 : 24.28, key.black ? 7.5 : 4.4).project(camera);
+    assert.equal(performance.pick(camera, point.x, point.y)?.midi, key.midi);
+  }
+  geometry.dispose(); material.dispose();
+});
