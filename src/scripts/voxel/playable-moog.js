@@ -1,6 +1,7 @@
-import { createSynth, filterFrequency, noteName } from './synth.js';
+import { createSynth, filterFrequency, noteName, AUDIO_TAIL_SECONDS } from './synth.js';
 import { bindInstrumentInput } from './instrument-input.js';
 import { createPlayDiscovery } from './play-discovery.js';
+import { mountPedalControls } from './pedal-controls.js';
 
 const shortcuts = new Map('awsedftgyhujk'.split('').map((key, i) => [key, 60 + i]));
 export function mountPlayableMoog(track, stage, performance, camera, requestDraw, signal) {
@@ -15,20 +16,25 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
   const keyboard = track.querySelector('[data-instrument-keyboard]');
   const keyArea = track.querySelector('[data-instrument-hitarea="keys"]');
   const knobArea = track.querySelector('[data-instrument-hitarea="knob"]');
+  const pedalAreas = Object.fromEntries(['mix', 'space', 'bypass'].map(name => [name, track.querySelector(`[data-instrument-hitarea="${name}"]`)]));
   const keys = [...track.querySelectorAll('[data-midi]')];
   const discovery = createPlayDiscovery(), cancellers = [];
   const synth = createSynth({ onError() {
     status.textContent = 'Sound could not start. Try another key, or open this page in Safari or Chrome.';
     readout.textContent = 'SOUND PAUSED';
   } });
-  const state = { focus: 0, cutoff: .52, depths: new Float32Array(37), leftX: 0, rightX: 0, leftPress: 0, rightPress: 0, wave: null, moving: false };
+  const state = { focus: 0, cutoff: .52, reverb: synth.reverb, depths: new Float32Array(37), leftX: 0, rightX: 0, leftPress: 0, rightPress: 0, wave: null, moving: false };
+  const pedal = mountPedalControls(track, { getValue: () => synth.reverb, setValue: setReverb, signal });
+  function setReverb(value) {
+    synth.setReverb(value); state.reverb = synth.reverb; pedal.sync(); requestDraw();
+  }
   let open = false, available = false, tail = 0, enteredAtScroll = 0, projected = null;
   let leftTarget = 0, rightTarget = 0, tapTimer, lastNote = null;
-  function release(id) { if (synth.noteOff(id)) { tail = 1.1; requestDraw(); } }
+  function release(id) { if (synth.noteOff(id)) { tail = AUDIO_TAIL_SECONDS; requestDraw(); } }
   function press(midi, id, tap = false) {
     if (!open || !available) return;
     if (tap) clearTimeout(tapTimer);
-    synth.noteOn(midi, id); tail = 1.1; lastNote = midi;
+    synth.noteOn(midi, id); tail = AUDIO_TAIL_SECONDS; lastNote = midi;
     const key = performance.keyData.find(key => key.midi === midi);
     if (key.x >= 0) leftTarget = key.x - 4.8; else rightTarget = key.x + 4.8;
     status.textContent = '';
@@ -37,7 +43,8 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
   }
   function stop() {
     for (const cancel of cancellers) cancel();
-    clearTimeout(tapTimer); synth.silence(); tail = 1.1; requestDraw();
+    pedal.cancel();
+    clearTimeout(tapTimer); synth.silence(); tail = AUDIO_TAIL_SECONDS; requestDraw();
   }
   function setOpen(value, focus = false) {
     open = Boolean(value && available);
@@ -55,6 +62,7 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
       stage.setAttribute('aria-orientation', 'horizontal'); stage.setAttribute('aria-valuemin', '-180'); stage.setAttribute('aria-valuemax', '180');
     }
     controls.hidden = !open; invite.hidden = !available || open;
+    pedal.setVisible(open);
     openButton.setAttribute('aria-expanded', String(open));
     track.querySelector('[data-voxel-help]').textContent = open
       ? 'Hold a key and slide left or right to change notes. Move up for a brighter tone or down for a warmer tone. You can also play with A W S E D F T G Y H U J K. Scroll outside the keys to continue. Escape returns to the portrait.'
@@ -76,7 +84,13 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
     const desiredX = x + (anchor ? anchor.x - startX : 0);
     return points.reduce((best, point) => !best || Math.abs(point.x - desiredX) < Math.abs(best.x - desiredX) ? point : best, null);
   }
-  const input = { press, release, getCutoff: () => synth.cutoff, setCutoff, signal, onStart: () => stage.focus({ preventScroll: true }) };
+  const input = {
+    press, release, getCutoff: () => synth.cutoff, setCutoff, signal, independentTouch: true,
+    getControl: name => name === 'cutoff' ? synth.cutoff : synth.reverb[name],
+    setControl: (name, value) => name === 'cutoff' ? setCutoff(value) : setReverb({ [name]: value }),
+    activate: () => setReverb({ enabled: !synth.reverb.enabled }),
+    onStart: () => stage.focus({ preventScroll: true }),
+  };
   cancellers.push(bindInstrumentInput(stage, {
     ...input, enabled: () => open && state.focus > .96,
     pick(x, y) {
@@ -126,6 +140,7 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
     }
   }, { signal, passive: true });
   setCutoff(.52);
+  pedal.sync();
   return {
     get open() { return open; },
     get available() { return available; },
@@ -158,12 +173,19 @@ export function mountPlayableMoog(track, stage, performance, camera, requestDraw
     updateHitAreas() {
       const enabled = open && state.focus > .96;
       keyArea.hidden = knobArea.hidden = !enabled;
+      for (const area of Object.values(pedalAreas)) area.hidden = !enabled;
       if (!enabled) return;
       projected = performance.projectControls(camera);
       keyArea.style.clipPath = `polygon(${projected.keys.map(([x, y]) => `${(x + 1) * 50}% ${(1 - y) * 50}%`).join(',')})`;
       const [x, y] = projected.knob;
       knobArea.style.clipPath = `circle(18px at ${(x + 1) * 50}% ${(1 - y) * 50}%)`;
+      const rect = stage.getBoundingClientRect();
+      for (const [name, [px, py]] of Object.entries(projected.pedal)) {
+        // The physical knobs sit close together; larger phone targets are in
+        // the pedal panel, while these match the actual rendered geometry.
+        pedalAreas[name].style.clipPath = `circle(${Math.min(15, rect.width / 35 * .9)}px at ${(px + 1) * 50}% ${(1 - py) * 50}%)`;
+      }
     },
-    dispose() { clearTimeout(tapTimer); synth.dispose(); controls.hidden = invite.hidden = keyArea.hidden = knobArea.hidden = true; },
+    dispose() { clearTimeout(tapTimer); synth.dispose(); pedal.setVisible(false); controls.hidden = invite.hidden = keyArea.hidden = knobArea.hidden = true; Object.values(pedalAreas).forEach(area => area.hidden = true); },
   };
 }

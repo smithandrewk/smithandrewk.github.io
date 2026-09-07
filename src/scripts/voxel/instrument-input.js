@@ -1,6 +1,6 @@
 // Only the projected keys/knob and compact keyboard reserve touch gestures.
 // The surrounding portrait keeps native scrolling and pinch zoom.
-export function bindInstrumentInput(surface, { enabled, pick, slide = pick, press, release, getCutoff, setCutoff, signal, source = 'surface', onStart = () => {} }) {
+export function bindInstrumentInput(surface, { enabled, pick, slide = pick, press, release, getCutoff, setCutoff, getControl = getCutoff, setControl = (control, value) => setCutoff(value), activate = () => {}, independentTouch = false, signal, source = 'surface', onStart = () => {} }) {
   let gesture = null;
   const win = surface.ownerDocument.defaultView;
   const touchEvents = 'ontouchstart' in win;
@@ -15,7 +15,8 @@ export function bindInstrumentInput(surface, { enabled, pick, slide = pick, pres
     const hit = pick(x, y);
     if (!hit) return false;
     onStart();
-    gesture = { kind, id, hit, x, y, cutoff: getCutoff(), midi: hit.midi, sounding: hit.midi !== undefined, pitchMoved: false };
+    gesture = { kind, id, hit, x, y, cutoff: hit.control ? getControl(hit.control) : getCutoff(), midi: hit.midi, sounding: hit.midi !== undefined, pitchMoved: false };
+    if (hit.control === 'bypass') activate('bypass');
     if (gesture.sounding) press(hit.midi, source);
     if (kind === 'pointer') surface.setPointerCapture?.(id);
     return true;
@@ -23,8 +24,8 @@ export function bindInstrumentInput(surface, { enabled, pick, slide = pick, pres
   function move(x, y) {
     if (!gesture || !enabled()) { cancel(); return false; }
     const dx = x - gesture.x, dy = y - gesture.y;
-    if (gesture.hit.control === 'cutoff') {
-      setCutoff(gesture.cutoff + dx / 160 - dy / 180);
+    if (gesture.hit.control) {
+      if (gesture.hit.control !== 'bypass') setControl(gesture.hit.control, gesture.cutoff + dx / 160 - dy / 180);
     } else {
       gesture.pitchMoved ||= Math.abs(dx) > 3;
       const note = gesture.pitchMoved ? slide(x, gesture.y, gesture.hit, gesture.x)?.midi : gesture.midi;
@@ -45,12 +46,15 @@ export function bindInstrumentInput(surface, { enabled, pick, slide = pick, pres
     if (gesture?.kind === 'pointer' && gesture.id === e.pointerId) cancel();
   }, { signal });
   surface.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) { cancel(); return; }
-    const t = e.touches[0];
+    // Separate controls can each own one finger: hold a key with one hand and
+    // turn the larger pedal knob with the other. Two fingers on this same
+    // surface still cancel instead of unexpectedly replacing a held note.
+    if (independentTouch ? gesture?.kind === 'touch' : e.touches.length !== 1) { cancel(); return; }
+    const t = independentTouch ? e.changedTouches?.[0] ?? e.touches[0] : e.touches[0];
     if (begin(t.clientX, t.clientY, 'touch', t.identifier) && e.cancelable) e.preventDefault();
   }, { signal, passive: false });
   surface.addEventListener('touchmove', e => {
-    if (e.touches.length !== 1) { cancel(); return; }
+    if (!independentTouch && e.touches.length !== 1) { cancel(); return; }
     const t = [...e.touches].find(t => t.identifier === gesture?.id);
     if (gesture?.kind === 'touch' && t && move(t.clientX, t.clientY) && e.cancelable) e.preventDefault();
   }, { signal, passive: false });

@@ -33,6 +33,9 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
     new THREE.Vector3(key.x + (key.black ? .26 : .41), key.black ? 24.9 : 24.28, 8.87),
   ));
   const knobBox = new THREE.Box3().setFromCenterAndSize(controlPivot, new THREE.Vector3(1.7, 1.4, 1.7));
+  const pedalPivots = Object.fromEntries(Object.entries(instrument.pedal).map(([name, p]) => [name, new THREE.Vector3(...p)]));
+  const pedalBoxes = Object.entries(pedalPivots).map(([control, center]) => ({ control, box: new THREE.Box3().setFromCenterAndSize(center, new THREE.Vector3(1.9, 1.4, 1.9)) }));
+  const pedalAxis = new THREE.Vector3(0, 1, 0);
   const lean = new THREE.Quaternion(), hipPivot = new THREE.Vector3(0, 19.3, -6);
 
   function pick(camera, x, y) {
@@ -45,6 +48,9 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
       }
     }
     if (raycaster.ray.intersectBox(knobBox, hitPoint) && hitPoint.distanceTo(raycaster.ray.origin) < distance) result = { control: 'cutoff' };
+    for (const { control, box } of pedalBoxes) if (raycaster.ray.intersectBox(box, hitPoint) && hitPoint.distanceTo(raycaster.ray.origin) < distance) {
+      distance = hitPoint.distanceTo(raycaster.ray.origin); result = { control };
+    }
     return result;
   }
   function projectControls(camera) {
@@ -52,6 +58,7 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
     return {
       keys: [[9, 24.3, 3.65], [-9.55, 24.3, 3.65], [-9.55, 24.9, 9], [9, 24.9, 9]].map(project),
       knob: project(instrument.cutoff),
+      pedal: Object.fromEntries(Object.entries(instrument.pedal).map(([name, p]) => [name, project(p)])),
       notes: instrument.keys.map(key => ({ midi: key.midi, x: project([key.x, 24.5, 6])[0] })),
     };
   }
@@ -88,6 +95,7 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
         if (block.part === "bench") { start = .445 + block.p[1] / 17 * .025 + r * .018; duration = .105; }
         if (block.part === "stand") { start = .475 + block.p[1] / 24 * .05 + r * .02; duration = .13; }
         if (block.part === "cable") { start = .69 + r * .04; duration = .12; }
+        if (block.part === 'pedal') { start = .72 + r * .04; duration = .13; }
         const t = clamp((progress - start) / duration);
         const fall = 1 - smooth(0, .9, t);
         dummy.position.fromArray(block.p);
@@ -105,13 +113,21 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
           const nearHand = block.key === (x > 0 ? 5 : 16);
           if (nearHand) dummy.position.y -= Math.max(0, -hand.lift + .12 * hand.envelope) * state.playing;
         }
-        if (block.control) {
+        if (block.control === 'cutoff') {
           controlTurn.setFromAxisAngle(controlAxis, ((interactive?.cutoff ?? .52) - .5) * -4.4);
           dummy.position.sub(controlPivot).applyQuaternion(controlTurn).add(controlPivot);
           dummy.quaternion.premultiply(controlTurn);
           color.set(block.color);
           if (block.scale[1] < .1) color.lerp(new THREE.Color('#e9b66c'), interactive?.focus ?? 0);
           instrumentMesh.setColorAt(i, color);
+        } else if (block.control === 'mix' || block.control === 'space') {
+          const value = interactive?.reverb?.[block.control] ?? (block.control === 'mix' ? .48 : .65);
+          const pivot = pedalPivots[block.control];
+          controlTurn.setFromAxisAngle(pedalAxis, (value - .5) * -4.4);
+          dummy.position.sub(pivot).applyQuaternion(controlTurn).add(pivot);
+          dummy.quaternion.premultiply(controlTurn);
+        } else if (block.control === 'led') {
+          instrumentMesh.setColorAt(i, color.set(interactive?.reverb?.enabled === false ? '#254c59' : '#9de8db'));
         }
         dummy.scale.fromArray(block.scale).multiplyScalar(t > 0 ? 1 : 0);
         dummy.updateMatrix(); instrumentMesh.setMatrixAt(i, dummy.matrix);

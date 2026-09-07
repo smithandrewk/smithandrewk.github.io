@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bindInstrumentInput } from '../src/scripts/voxel/instrument-input.js';
-import { createSynth, noteFrequency, filterFrequency } from '../src/scripts/voxel/synth.js';
+import { createSynth, noteFrequency, filterFrequency, AUDIO_TAIL_SECONDS } from '../src/scripts/voxel/synth.js';
 import { makeMoogData } from '../src/scripts/voxel/moog-data.js';
 import { createPlaybackSession } from '../src/scripts/voxel/playback-session.js';
 import { portraitChapters, createPlayDiscovery } from '../src/scripts/voxel/play-discovery.js';
 
-function inputHarness(touchCapable = true) {
+function inputHarness(touchCapable = true, independentTouch = false) {
   const stage = new EventTarget(), signal = new AbortController(), capture = new Set();
   stage.ownerDocument = { defaultView: new EventTarget() };
   if (touchCapable) stage.ownerDocument.defaultView.ontouchstart = null;
@@ -15,7 +15,7 @@ function inputHarness(touchCapable = true) {
   stage.releasePointerCapture = id => capture.delete(id);
   const notes = [], releases = []; let cutoff = .5, enabled = true;
   bindInstrumentInput(stage, {
-    enabled: () => enabled,
+    enabled: () => enabled, independentTouch,
     pick: x => x >= 0 && x < 100 ? { midi: 48 + Math.floor(x / 5) } : x >= 150 && x < 180 ? { control: 'cutoff' } : null,
     slide: x => ({ midi: 48 + Math.max(0, Math.min(19, Math.floor(x / 5))) }),
     press: (...note) => notes.push(note), release: id => releases.push(id), getCutoff: () => cutoff, setCutoff: v => cutoff = v, signal: signal.signal,
@@ -44,6 +44,18 @@ test('vertical movement changes tone while preserving the held note', () => {
   h.send('touchmove', { touches: [touch(91, 190)] }); assert.equal(h.cutoff, 0);
   assert.equal(h.notes.length, 1); assert.equal(h.releases.length, 0); h.signal.abort();
   assert.equal(h.releases.length, 1);
+});
+
+test('a separate pedal finger can move while a keyboard finger sustains and slides', () => {
+  const h = inputHarness(true, true), pedalFinger = touch(160,20,2);
+  h.send('touchstart', { touches:[touch(20,100)], changedTouches:[touch(20,100)] });
+  h.send('touchmove', { touches:[touch(50,100),pedalFinger] });
+  assert.deepEqual(h.notes.map(n => n[0]), [52,58]); assert.equal(h.releases.length,0);
+  h.send('touchend', { touches:[pedalFinger] }); assert.equal(h.releases.length,1); h.signal.abort();
+  const p = inputHarness(true,true);
+  p.send('touchstart', { touches:[touch(20,100),pedalFinger], changedTouches:[pedalFinger] });
+  p.send('touchmove', { touches:[touch(20,100),touch(200,20,2)] });
+  assert.equal(p.cutoff,.75); assert.equal(p.notes.length,0); p.signal.abort();
 });
 
 test('background swipes remain native even if the finger later passes across keys', () => {
@@ -82,7 +94,7 @@ test('pointer-only touch and mouse input capture a sustained gesture and release
 });
 
 function audioHarness(deferred = false, playbackSession) {
-  let created = 0, resume;
+  let created = 0, buffers = 0, resume;
   const node = () => {
     const n = { connect() { return n; }, start() {} };
     for (const name of ['gain', 'Q', 'frequency', 'detune', 'threshold', 'knee', 'ratio', 'delayTime']) n[name] = { value: 0, cancelScheduledValues() {}, setTargetAtTime(v) { this.value = v; } };
@@ -90,17 +102,47 @@ function audioHarness(deferred = false, playbackSession) {
   };
   const gains = [], oscillators = [];
   const context = {
-    state: 'suspended', currentTime: 0, destination: node(),
+    state: 'suspended', currentTime: 0, sampleRate: 44100, destination: node(),
+    createBuffer(channels, length) { buffers++; const data = Array.from({ length: channels }, () => new Float32Array(length)); return { getChannelData: channel => data[channel] }; },
     createGain() { const n = node(); gains.push(n); return n; },
     createOscillator() { const n = node(); oscillators.push(n); return n; },
-    createBiquadFilter: node, createDynamicsCompressor: node, createAnalyser: node, createDelay: node,
+    createBiquadFilter: node, createDynamicsCompressor: node, createAnalyser: node, createConvolver: node,
     resume() { if (deferred) return new Promise(resolve => resume = () => { context.state = 'running'; resolve(); }); context.state = 'running'; return Promise.resolve(); },
     suspend() { context.state = 'suspended'; return Promise.resolve(); },
     close() { context.state = 'closed'; return Promise.resolve(); },
   };
   const synth = createSynth({ contextFactory() { created++; return context; }, playbackSession });
-  return { synth, context, gains, oscillators, get created() { return created; }, resume() { resume(); } };
+  return { synth, context, gains, oscillators, get created() { return created; }, get buffers() { return buffers; }, resume() { resume(); } };
 }
+
+test('pedal changes are lazy, bounded, and never rebuild rooms or release a held note', async () => {
+  const h = audioHarness();
+  h.synth.setReverb({ mix: .8, space: .9, enabled: false }); assert.equal(h.created, 0);
+  h.synth.noteOn(60, 'finger'); await Promise.resolve();
+  assert.equal(h.buffers, 2); assert.equal(h.synth.reverb.enabled, false);
+  for (let i = 0; i <= 100; i++) h.synth.setReverb({ mix: i / 100, space: 1 - i / 100 });
+  assert.equal(h.buffers, 2); assert.equal(h.synth.note, 60);
+  h.synth.setReverb({ mix: 3, space: -1, enabled: true });
+  assert.deepEqual(h.synth.reverb, { mix: 1, space: 0, enabled: true });
+  h.synth.setReverb({ mix: NaN, space: Infinity });
+  assert.deepEqual(h.synth.reverb, { mix: 1, space: 0, enabled: true }); h.synth.dispose();
+});
+
+test('pedal drags target their own parameter and the footswitch toggles once without a note', () => {
+  const surface = new EventTarget(), controller = new AbortController(), values = [], activations = [];
+  surface.ownerDocument = { defaultView: new EventTarget() };
+  bindInstrumentInput(surface, {
+    enabled: () => true, pick: x => ({ control: x > 100 ? 'bypass' : 'mix' }),
+    getCutoff: () => .2, setCutoff: () => assert.fail('pedal must not change tone'),
+    getControl: name => name === 'mix' ? .4 : 0, setControl: (name, value) => values.push([name,value]),
+    activate: name => activations.push(name), press: () => assert.fail('pedal must not sound a key'), signal: controller.signal,
+  });
+  const send = (type, x, y) => surface.dispatchEvent(Object.assign(new Event(type, { cancelable:true }), pointer(x,y,'mouse')));
+  send('pointerdown',20,100); send('pointermove',100,100); send('pointerup',100,100);
+  assert.deepEqual(values, [['mix', .9]]);
+  send('pointerdown',150,100); send('pointermove',150,20); send('pointerup',150,20);
+  assert.deepEqual(activations,['bypass']); assert.equal(values.length,1); controller.abort();
+});
 
 test('audio is lazy, uses last-note priority, and releases back to a held note', async () => {
   const h = audioHarness(); assert.equal(h.created, 0);
@@ -138,6 +180,8 @@ test('music playback is claimed on the first note, then the prior session is res
   assert.equal(h.gains[0].gain.value, .24);
   h.synth.noteOff('finger');
   await new Promise(resolve => setTimeout(resolve, 1150));
+  assert.equal(audioSession.type, 'playback'); assert.equal(h.context.state, 'running');
+  await new Promise(resolve => setTimeout(resolve, AUDIO_TAIL_SECONDS * 1000 - 1100));
   assert.equal(audioSession.type, 'auto'); assert.equal(h.context.state, 'suspended');
   h.synth.dispose();
 });
@@ -160,7 +204,7 @@ test('a new touch arriving during idle suspension resumes without losing playbac
   });
   try {
     h.synth.noteOn(60, 'finger'); await Promise.resolve(); h.synth.noteOff('finger');
-    await new Promise(resolve => setTimeout(resolve, 1150));
+    await new Promise(resolve => setTimeout(resolve, AUDIO_TAIL_SECONDS * 1000 + 50));
     assert.equal(typeof finishSuspending, 'function');
     h.synth.noteOn(67, 'finger'); finishSuspending(); await Promise.resolve();
     assert.equal(h.context.state, 'running'); assert.equal(h.synth.note, 67);

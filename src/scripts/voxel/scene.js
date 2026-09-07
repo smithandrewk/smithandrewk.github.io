@@ -52,8 +52,8 @@ export function mountPortrait(track) {
     const angle = restingAngle + turn * instrumentFocus;
     elevation = THREE.MathUtils.lerp(.22 + cameraBlend * .23, 1.43, instrumentFocus);
     target.set(0, 29 - cameraBlend * 6, cameraBlend * 2);
-    target.lerp(new THREE.Vector3(0, 24.5, 11.5), instrumentFocus);
-    const worldHeight = THREE.MathUtils.lerp(Math.max(76 - cameraBlend * 10, (33 + Math.max(platformBlend, cameraBlend) * 10) / aspect), Math.max(24, 29 / aspect), instrumentFocus);
+    target.lerp(new THREE.Vector3(-2.8, 24.5, 11.5), instrumentFocus);
+    const worldHeight = THREE.MathUtils.lerp(Math.max(76 - cameraBlend * 10, (33 + Math.max(platformBlend, cameraBlend) * 10) / aspect), Math.max(24, 35 / aspect), instrumentFocus);
     camera.left = -worldHeight * aspect / 2;
     camera.right = worldHeight * aspect / 2;
     camera.top = worldHeight / 2;
