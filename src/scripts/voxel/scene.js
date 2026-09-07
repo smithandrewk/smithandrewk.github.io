@@ -3,6 +3,7 @@ import { figureData } from "./figure-data.js";
 import { createPerformanceScene } from "./performance-scene.js";
 import { performanceTimeline, smooth } from "./performance-motion.js";
 import { bindPortraitRotation } from "./rotation-input.js";
+import { mountPlayableMoog } from "./playable-moog.js";
 import {
   makePieces,
   piecePose,
@@ -41,13 +42,17 @@ export function mountPortrait(track) {
   const target = new THREE.Vector3(0, 29, 0);
   let yaw = (-24 * Math.PI) / 180,
     elevation = 0.22;
-  let cameraBlend = 0, platformBlend = 0, aspect = 1;
+  let cameraBlend = 0, platformBlend = 0, aspect = 1, instrumentFocus = 0;
   function updateCamera() {
     const distance = 175;
-    const angle = yaw - cameraBlend * 1.35;
-    elevation = .22 + cameraBlend * .23;
+    const restingAngle = yaw - cameraBlend * 1.35;
+    const focusAngle = -Math.PI + .12;
+    const turn = Math.atan2(Math.sin(focusAngle - restingAngle), Math.cos(focusAngle - restingAngle));
+    const angle = restingAngle + turn * instrumentFocus;
+    elevation = THREE.MathUtils.lerp(.22 + cameraBlend * .23, 1.43, instrumentFocus);
     target.set(0, 29 - cameraBlend * 6, cameraBlend * 2);
-    const worldHeight = Math.max(76 - cameraBlend * 10, (33 + Math.max(platformBlend, cameraBlend) * 10) / aspect);
+    target.lerp(new THREE.Vector3(0, 24.5, 11.5), instrumentFocus);
+    const worldHeight = THREE.MathUtils.lerp(Math.max(76 - cameraBlend * 10, (33 + Math.max(platformBlend, cameraBlend) * 10) / aspect), Math.max(24, 29 / aspect), instrumentFocus);
     camera.left = -worldHeight * aspect / 2;
     camera.right = worldHeight * aspect / 2;
     camera.top = worldHeight / 2;
@@ -260,7 +265,9 @@ export function mountPortrait(track) {
     const assembled = state.assembly >= assemblyEnd;
     standAge = assembled ? Math.min(3.6, standAge + dt) : 0;
     playAge = state.playing > .95 ? Math.min(6.4, playAge + dt) : 0;
-    performance.update(progress, state, standAge, playAge, reducedMotion.matches);
+    const interaction = instrument.update(dt, state.playing > .95 && !reducedMotion.matches);
+    instrumentFocus = interaction.focus;
+    performance.update(progress, state, standAge, playAge, reducedMotion.matches, interaction);
     updateFigure(state.assembly, state, standAge, playAge);
     cameraBlend = state.camera;
     platformBlend = state.platform;
@@ -278,12 +285,18 @@ export function mountPortrait(track) {
     if (caption) {
       caption.hidden = reducedMotion.matches || state.camera < .4;
       caption.style.opacity = String(smooth(.4, .88, state.camera));
+      const mode = instrument.open ? 'interactive' : 'performance';
+      if (caption.dataset.mode !== mode) {
+        caption.querySelector('span').innerHTML = instrument.open ? 'Make a little music.' : '<b>20%</b> playing keys.';
+        caption.dataset.mode = mode;
+      }
     }
     fallback.hidden = true;
-    hints.hidden = false;
+    hints.hidden = instrument.open || instrument.available;
+    if (!instrument.open && !stage.hasAttribute('aria-valuenow')) setYaw(yaw);
     track.dataset.ready = "true";
     const living = !reducedMotion.matches && ((assembled && standAge < 3.6) || (state.playing > .95 && playAge < 6.4));
-    if (Math.abs(desired - progress) > 0.00008 || living) requestDraw();
+    if (Math.abs(desired - progress) > 0.00008 || living || instrument.animating) requestDraw();
   }
   function requestDraw() {
     if (!raf && !disposed && isVisible && !document.hidden)
@@ -329,6 +342,7 @@ export function mountPortrait(track) {
   stage.setAttribute("aria-describedby", "portrait-help");
   setYaw(yaw);
 
+  const instrument = mountPlayableMoog(track, stage, performance, camera, requestDraw, events.signal);
   bindPortraitRotation(stage, {
     getAngle: () => yaw,
     setAngle: setYaw,
@@ -336,6 +350,7 @@ export function mountPortrait(track) {
       track.dataset.dragUsed = "true";
     },
     signal: events.signal,
+    enabled: () => !instrument.open,
   });
 
   function applyMotionPreference() {
@@ -368,6 +383,7 @@ export function mountPortrait(track) {
         lastTime = 0;
         onScroll();
       } else {
+        instrument.stop();
         cancelAnimationFrame(raf);
         raf = 0;
       }
@@ -403,6 +419,7 @@ export function mountPortrait(track) {
     if (disposed) return;
     disposed = true;
     events.abort();
+    instrument.dispose();
     cancelAnimationFrame(raf);
     visibilityObserver.disconnect();
     resizeObserver.disconnect();

@@ -2,7 +2,7 @@
 // when deciding whether a gesture belongs to page scrolling.
 export function bindPortraitRotation(
   stage,
-  { getAngle, setAngle, onInteract, signal },
+  { getAngle, setAngle, onInteract, signal, enabled = () => true },
 ) {
   let gesture = null;
   const wrap = (angle) =>
@@ -19,6 +19,7 @@ export function bindPortraitRotation(
   }
 
   function move(x, y) {
+    if (!enabled()) { endGesture(); return false; }
     if (!gesture) return false;
     if (!gesture.active) {
       const dx = Math.abs(x - gesture.startX);
@@ -45,6 +46,7 @@ export function bindPortraitRotation(
   stage.addEventListener(
     "pointerdown",
     (event) => {
+      if (!enabled()) return;
       if (event.isPrimary === false) {
         if (event.pointerType === "touch") endGesture();
         return;
@@ -97,6 +99,7 @@ export function bindPortraitRotation(
     "touchstart",
     (event) => {
       endGesture();
+      if (!enabled()) return;
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
       gesture = {
@@ -142,6 +145,7 @@ export function bindPortraitRotation(
   stage.addEventListener(
     "keydown",
     (event) => {
+      if (!enabled()) return;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const angle = getAngle(),
         step = Math.PI / 18;

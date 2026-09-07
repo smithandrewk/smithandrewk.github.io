@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>Moog audio audit</title>
+<h1>Offline audio verification</h1><p>Render the actual synthesizer graph without playing sound.</p>
+<button id="run">Run audio checks</button><pre id="result">Not run</pre>
+<script type="module">
+import { makeVoiceGraph, noteFrequency, filterFrequency } from '../src/scripts/voxel/synth.js';
+document.querySelector('#run').onclick = async () => {
+  const results = [];
+  for (const cutoff of [.08, .52, .95]) {
+    const rate = 44100, context = new OfflineAudioContext(1, rate * 3, rate), graph = makeVoiceGraph(context);
+    for (const { oscillator, octave } of graph.oscillators) oscillator.frequency.value = noteFrequency(60) * octave;
+    graph.filter.frequency.value = filterFrequency(cutoff); graph.second.frequency.value = filterFrequency(cutoff) * 1.25;
+    graph.amp.gain.setTargetAtTime(.24, .2, .012); graph.amp.gain.setTargetAtTime(0, 1.2, .075);
+    const samples = (await context.startRendering()).getChannelData(0);
+    const rms = (a, b) => Math.sqrt(samples.slice(a * rate, b * rate).reduce((sum, v) => sum + v * v, 0) / ((b - a) * rate));
+    let peak = 0, derivative = 0;
+    for (let i = rate / 2; i < rate; i++) { peak = Math.max(peak, Math.abs(samples[i])); derivative += Math.abs(samples[i] - samples[i - 1]); }
+    results.push({ cutoff, peak, rms: rms(.5, 1), silence: rms(0, .19), tail: rms(2.5, 3), brightness: derivative / (rate / 2) });
+  }
+  const pass = results.every(r => r.peak > .005 && r.peak < .8 && r.silence === 0 && r.tail < .001) && results[2].brightness > results[0].brightness * 2;
+  document.querySelector('#result').textContent = JSON.stringify({ pass, results }, null, 2);
+};
+</script>

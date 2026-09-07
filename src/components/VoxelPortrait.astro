@@ -1,5 +1,9 @@
 ---
 // Progressive enhancement: the existing portrait remains useful without WebGL.
+const naturals = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
+const semitones = [0, 2, 4, 5, 7, 9, 11, 12];
+const letters = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K'];
+const sharps = [{ note: 'C sharp', midi: 61, position: 1, letter: 'W' }, { note: 'D sharp', midi: 63, position: 2, letter: 'E' }, { note: 'F sharp', midi: 66, position: 4, letter: 'T' }, { note: 'G sharp', midi: 68, position: 5, letter: 'Y' }, { note: 'A sharp', midi: 70, position: 6, letter: 'U' }];
 ---
 
 <section class="portrait-track" data-voxel-track aria-labelledby="hero-title">
@@ -29,6 +33,26 @@
         <span><b>20%</b> playing keys.</span>
         <small>Moog Subsequent 37</small>
       </p>
+
+      <div class="instrument-invite" data-instrument-invite hidden>
+        <button type="button" data-instrument-open aria-expanded="false" aria-controls="instrument-controls">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v14M13 5v14M18 5v14M6 5v7M11 5v7M16 5v7"/></svg>
+          Your turn. Play a few notes.
+        </button>
+      </div>
+      <div class="instrument-controls" id="instrument-controls" data-instrument-controls hidden role="group" aria-label="Play the synthesizer">
+        <div class="instrument-tools">
+          <div class="instrument-readout"><span class="sound-light" aria-hidden="true"></span><span data-instrument-note>YOUR TURN</span></div>
+          <label class="instrument-filter">Tone <input data-instrument-filter aria-label="Synthesizer filter cutoff" type="range" min="0" max="100" value="52" /><output data-instrument-frequency>990 Hz</output></label>
+          <button type="button" class="instrument-done" data-instrument-close aria-label="Stop playing and return to portrait">Done <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="instrument-keyboard" role="group" aria-label="One octave of playable keys">
+          {naturals.map((note, i) => <button type="button" class="instrument-key" data-midi={60 + semitones[i]} aria-label={`Play ${note}${i === 7 ? 5 : 4}`}><span>{note}</span><kbd aria-hidden="true">{letters[i]}</kbd></button>)}
+          {sharps.map(key => <button type="button" class="instrument-key instrument-key-black" data-midi={key.midi} aria-label={`Play ${key.note} 4`} style={`--key-position: ${key.position}`}><kbd aria-hidden="true">{key.letter}</kbd></button>)}
+        </div>
+        <p class="instrument-tip" data-instrument-tip>Tap the keys. Drag the large knob to shape the sound.</p>
+        <span class="portrait-help" data-instrument-status role="status"></span>
+      </div>
 
       <div class="portrait-hints" data-voxel-hints hidden>
         <span class="portrait-hint portrait-scroll" data-voxel-scroll-hint>
@@ -77,6 +101,7 @@
   .portrait-stage :global(canvas) { display: block; width: 100%; height: 100%; }
   .portrait-track[data-ready] .portrait-stage { cursor: grab; }
   .portrait-stage[data-dragging] { cursor: grabbing; }
+  .portrait-track[data-instrument-open] .portrait-stage { bottom: 8rem; cursor: pointer; }
   .portrait-stage:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; border-radius: var(--radius-control); }
   .portrait-fallback { width: 100%; height: 100%; object-fit: contain; object-position: center; }
   .performance-caption { position: absolute; top: .5rem; inset-inline: 0; text-align: center; pointer-events: none; color: var(--color-ink); line-height: 1.3; }
@@ -84,6 +109,31 @@
   .performance-caption span { font-size: 1rem; letter-spacing: -.02em; }
   .performance-caption b { font-family: var(--font-mono); font-weight: 400; color: var(--color-accent); margin-right: .25rem; }
   .performance-caption small { display: block; margin-top: .35rem; font-family: var(--font-mono); color: var(--color-muted); font-size: .6rem; letter-spacing: .13em; text-transform: uppercase; }
+  .instrument-invite { position: absolute; inset: auto 0 0; display: flex; justify-content: center; }
+  .instrument-invite button { display: inline-flex; gap: .6rem; align-items: center; min-height: 44px; padding: .5rem 1rem; border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent); border-radius: 999px; font-size: .75rem; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 5%, transparent); cursor: pointer; transition: background .2s, transform .2s; }
+  .instrument-invite button:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); transform: translateY(-1px); }
+  .instrument-invite svg { width: 18px; height: 18px; }
+  .instrument-controls { position: absolute; inset: auto 0 0; padding-inline: .5rem; }
+  .instrument-invite[hidden], .instrument-controls[hidden] { display: none; }
+  .instrument-tools { display: flex; align-items: center; justify-content: space-between; gap: .5rem; height: 44px; font-size: .65rem; }
+  .instrument-readout { display: flex; align-items: center; gap: .4rem; min-width: 4.8rem; color: var(--color-accent); font-family: var(--font-mono); letter-spacing: .04em; }
+  .sound-light { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .35; }
+  .portrait-track[data-note] .sound-light { opacity: 1; box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 50%, transparent); }
+  .instrument-filter { display: flex; align-items: center; gap: .4rem; color: var(--color-muted); }
+  .instrument-filter input { width: clamp(45px, 6vw, 85px); height: 44px; accent-color: var(--color-accent); cursor: ew-resize; }
+  .instrument-filter output { width: 3.3rem; font-size: .6rem; font-family: var(--font-mono); }
+  .instrument-done { min-width: 44px; min-height: 44px; cursor: pointer; color: var(--color-ink); }
+  .instrument-done span { margin-left: .25rem; color: var(--color-muted); }
+  .instrument-keyboard { display: flex; height: 56px; position: relative; gap: 3px; }
+  .instrument-key { position: relative; flex: 1; display: flex; justify-content: space-between; align-items: end; padding: 0 .35rem .35rem; border: 1px solid #d1ccc1; border-bottom: 3px solid #c4bdae; border-radius: 3px 3px 5px 5px; background: #f5f2e9; color: #645d51; font-family: var(--font-mono); font-size: .6rem; cursor: pointer; touch-action: manipulation; }
+  .instrument-key kbd { font-size: .5rem; opacity: .55; }
+  .instrument-key-black { position: absolute; z-index: 1; top: 0; left: calc(var(--key-position) * 12.5% - 3.75%); width: 7.5%; min-width: 24px; height: 33px; justify-content: center; border-color: #1f2525; border-bottom-color: #080f10; background: #303838; color: #eee9dc; }
+  .instrument-key[data-pressed], .instrument-key:active { background: #b6b6e2; border-color: #9294c2; transform: translateY(2px); }
+  .instrument-key-black[data-pressed], .instrument-key-black:active { background: #6364a4; }
+  .instrument-tip { text-align: center; margin-top: .5rem; font-size: .6rem; color: var(--color-muted); }
+  .instrument-controls button:focus-visible, .instrument-invite button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+  @media (max-width: 380px) { .instrument-filter output { display: none; } }
+  @media (hover: none) { .instrument-key kbd { display: none; } }
   .portrait-hints {
     position: absolute; inset: auto 0 0;
     display: flex; justify-content: center; align-items: center; flex-wrap: wrap;

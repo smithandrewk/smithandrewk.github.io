@@ -22,9 +22,36 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
   const pocket = new THREE.Vector3(-5, 27, 1.9), neckPivot = new THREE.Vector3();
   let leftGesture = playingGesture(0), rightGesture = playingGesture(0);
   let lastInstrumentProgress = -1, lastPhrase = -1;
+  let interactive = null;
+  const scope = new THREE.InstancedMesh(instrumentGeometry, new THREE.MeshBasicMaterial({ color: '#c39c66' }), 40);
+  scope.frustumCulled = false; scope.visible = false; scene.add(scope);
+  const controlAxis = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion().fromArray(instrument.blocks.find(b => b.control)?.rotation));
+  const controlPivot = new THREE.Vector3(...instrument.cutoff), controlTurn = new THREE.Quaternion();
+  const hitPoint = new THREE.Vector3(), raycaster = new THREE.Raycaster();
+  const hitBoxes = instrument.keys.map(key => new THREE.Box3(
+    new THREE.Vector3(key.x - (key.black ? .26 : .41), key.black ? 24.22 : 23.82, key.black ? 6.64 : 3.85),
+    new THREE.Vector3(key.x + (key.black ? .26 : .41), key.black ? 24.9 : 24.28, 8.87),
+  ));
+  const knobBox = new THREE.Box3().setFromCenterAndSize(controlPivot, new THREE.Vector3(1.7, 1.4, 1.7));
+  const lean = new THREE.Quaternion(), hipPivot = new THREE.Vector3(0, 19.3, -6);
 
-  function update(progress, state, standAge, playAge, reduced) {
-    leftGesture = playingGesture(playAge, 1); rightGesture = playingGesture(playAge, -1);
+  function pick(camera, x, y) {
+    raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+    let distance = Infinity, result = null;
+    for (let i = 0; i < hitBoxes.length; i++) {
+      if (raycaster.ray.intersectBox(hitBoxes[i], hitPoint)) {
+        const d = hitPoint.distanceTo(raycaster.ray.origin);
+        if (d < distance) { distance = d; result = { midi: instrument.keys[i].midi }; }
+      }
+    }
+    if (raycaster.ray.intersectBox(knobBox, hitPoint) && hitPoint.distanceTo(raycaster.ray.origin) < distance) result = { control: 'cutoff' };
+    return result;
+  }
+
+  function update(progress, state, standAge, playAge, reduced, interaction = null) {
+    interactive = interaction;
+    lean.setFromAxisAngle(xAxis, -.21 * (interactive?.focus ?? 0));
+    leftGesture = playingGesture(interactive?.focus > .01 ? 6.4 : playAge, 1); rightGesture = playingGesture(interactive?.focus > .01 ? 6.4 : playAge, -1);
     handMesh.visible = state.reach > .03;
     instrumentMesh.visible = progress > .45 && !reduced;
     if (handMesh.visible) {
@@ -34,16 +61,20 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
         // The hand emerges from the existing pocket before moving to the keys.
         dummy.position.lerp(pocket, 1 - state.reach);
         dummy.position.y += Math.sin(state.reach * Math.PI) * 3 + rightGesture.lift * state.playing;
+        if (interactive) {
+          dummy.position.x += interactive.rightX;
+          dummy.position.y -= interactive.rightPress * .27;
+        }
         dummy.quaternion.copy(block.rotation);
         dummy.scale.fromArray(block.scale).multiplyScalar(reveal);
         dummy.updateMatrix(); handMesh.setMatrixAt(i, dummy.matrix);
       });
       handMesh.instanceMatrix.needsUpdate = true;
     }
-    if (instrumentMesh.visible && (progress !== lastInstrumentProgress || playAge !== lastPhrase)) {
+    if (instrumentMesh.visible && (progress !== lastInstrumentProgress || playAge !== lastPhrase || interactive?.moving || interactive?.focus > 0)) {
       instrument.blocks.forEach((block, i) => {
         // Once assembled, a phrase only needs to update the two played keys.
-        if (progress === lastInstrumentProgress && block.key !== 5 && block.key !== 16) return;
+        if (progress === lastInstrumentProgress && block.key < 0 && !block.control) return;
         const r = randomFor(i + 7000);
         let start = .55 + block.p[1] / 29 * .06 + r * .035, duration = .16;
         if (block.part === "bench") { start = .445 + block.p[1] / 17 * .025 + r * .018; duration = .105; }
@@ -57,18 +88,42 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
         if (t > .9 && t < 1) dummy.position.y += Math.sin((t - .9) / .1 * Math.PI) * .14;
         dummy.quaternion.fromArray(block.rotation);
         dummy.rotateZ((r - .5) * fall * .18);
-        if (block.key >= 0 && state.playing > 0) {
+        if (block.key >= 0 && interactive?.focus > .01) {
+          dummy.position.y -= (interactive.depths[block.key] || 0) * .32;
+        } else if (block.key >= 0 && state.playing > 0) {
           const x = instrument.keys[block.key].x;
           const hand = x > 0 ? leftGesture : rightGesture;
           // One note per hand keeps the phrase within the instrument's two-note voice allocation.
           const nearHand = block.key === (x > 0 ? 5 : 16);
           if (nearHand) dummy.position.y -= Math.max(0, -hand.lift + .12 * hand.envelope) * state.playing;
         }
+        if (block.control) {
+          controlTurn.setFromAxisAngle(controlAxis, ((interactive?.cutoff ?? .52) - .5) * -4.4);
+          dummy.position.sub(controlPivot).applyQuaternion(controlTurn).add(controlPivot);
+          dummy.quaternion.premultiply(controlTurn);
+          color.set(block.color);
+          if (block.scale[1] < .1) color.lerp(new THREE.Color('#e9b66c'), interactive?.focus ?? 0);
+          instrumentMesh.setColorAt(i, color);
+        }
         dummy.scale.fromArray(block.scale).multiplyScalar(t > 0 ? 1 : 0);
         dummy.updateMatrix(); instrumentMesh.setMatrixAt(i, dummy.matrix);
       });
       instrumentMesh.instanceMatrix.needsUpdate = true;
+      instrumentMesh.instanceColor.needsUpdate = true;
       lastInstrumentProgress = progress; lastPhrase = playAge;
+    }
+    scope.visible = !reduced && (interactive?.focus ?? 0) > .95;
+    if (scope.visible) {
+      const wave = interactive.wave;
+      let start = 0;
+      if (wave) for (let i = 1; i < 400; i++) if (wave[i - 1] < 128 && wave[i] >= 128) { start = i; break; }
+      for (let i = 0; i < 40; i++) {
+        const value = wave ? (wave[(start + i * 8) % wave.length] - 128) / 128 : 0;
+        dummy.position.set(5.8 - i * .3, 30 + value * 9, 16.8);
+        dummy.quaternion.identity(); dummy.scale.set(.22, .22, .22);
+        dummy.updateMatrix(); scope.setMatrixAt(i, dummy.matrix);
+      }
+      scope.instanceMatrix.needsUpdate = true;
     }
   }
 
@@ -81,6 +136,14 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
       if (/Arm|Hand/.test(pose.group)) object.position.y += Math.sin(amount * Math.PI) * 1.8;
     }
     if (reduced) return;
+    if (interactive?.focus > 0) {
+      if (pose.group === 'head' || pose.group === 'body') {
+        object.position.sub(hipPivot).applyQuaternion(lean).add(hipPivot);
+        object.quaternion.premultiply(lean);
+      } else if (pose.group.endsWith('Arm')) {
+        object.position.z -= 2.7 * interactive.focus * smooth(29, 40, pose.rest.y);
+      }
+    }
     const settle = smooth(0, 1.6, standAge) * (1 - state.sit);
     const height = smooth(3, 48, pose.rest.y);
     object.position.x += .48 * settle * height;
@@ -97,10 +160,16 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
       object.quaternion.premultiply(lifeRotation);
     }
     if (pose.group === "leftHand") object.position.y += leftGesture.lift * state.playing;
+    if (interactive && /Arm|Hand/.test(pose.group)) {
+      const left = pose.group.startsWith('left');
+      const weight = pose.group.endsWith('Hand') ? 1 : 1 - smooth(29, 36, pose.rest.y);
+      object.position.x += (left ? interactive.leftX : interactive.rightX) * weight;
+      object.position.y -= (left ? interactive.leftPress : interactive.rightPress) * .27 * weight;
+    }
     if (pose.group === "leftArm" || pose.group === "rightArm") {
       const wristWeight = 1 - smooth(29, 36, pose.rest.y);
       object.position.y += (pose.group === "leftArm" ? leftGesture.lift : rightGesture.lift) * state.playing * wristWeight;
     }
   }
-  return { update, poseVoxel, blockCount: instrument.blocks.length, keys: instrument.keys.length };
+  return { update, poseVoxel, pick, keyData: instrument.keys, blockCount: instrument.blocks.length, keys: instrument.keys.length };
 }
