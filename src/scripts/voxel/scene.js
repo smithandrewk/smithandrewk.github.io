@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { figureData } from "./figure-data.js";
+import { createPerformanceScene } from "./performance-scene.js";
+import { performanceTimeline, smooth } from "./performance-motion.js";
 import { bindPortraitRotation } from "./rotation-input.js";
 import {
   makePieces,
@@ -17,6 +19,7 @@ export function mountPortrait(track) {
   const scrollHint = track.querySelector("[data-voxel-scroll-hint]");
   const scrollLabel = track.querySelector("[data-voxel-scroll-label]");
   const help = track.querySelector("[data-voxel-help]");
+  const caption = track.querySelector("[data-performance-caption]");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const events = new AbortController();
   const renderer = new THREE.WebGLRenderer({
@@ -38,12 +41,22 @@ export function mountPortrait(track) {
   const target = new THREE.Vector3(0, 29, 0);
   let yaw = (-24 * Math.PI) / 180,
     elevation = 0.22;
+  let cameraBlend = 0, platformBlend = 0, aspect = 1;
   function updateCamera() {
     const distance = 175;
+    const angle = yaw - cameraBlend * 1.35;
+    elevation = .22 + cameraBlend * .23;
+    target.set(0, 29 - cameraBlend * 6, cameraBlend * 2);
+    const worldHeight = Math.max(76 - cameraBlend * 10, (33 + Math.max(platformBlend, cameraBlend) * 10) / aspect);
+    camera.left = -worldHeight * aspect / 2;
+    camera.right = worldHeight * aspect / 2;
+    camera.top = worldHeight / 2;
+    camera.bottom = -worldHeight / 2;
+    camera.updateProjectionMatrix();
     camera.position.set(
-      Math.sin(yaw) * Math.cos(elevation) * distance,
-      29 + Math.sin(elevation) * distance,
-      Math.cos(yaw) * Math.cos(elevation) * distance,
+      target.x + Math.sin(angle) * Math.cos(elevation) * distance,
+      target.y + Math.sin(elevation) * distance,
+      target.z + Math.cos(angle) * Math.cos(elevation) * distance,
     );
     camera.lookAt(target);
   }
@@ -71,8 +84,8 @@ export function mountPortrait(track) {
   scene.add(rim);
 
   // Rounded solid geometry; normals follow each bevel rather than the original box faces.
-  function roundedCube(size = 0.98, radius = 0.18) {
-    const g = new THREE.BoxGeometry(size, size, size, 6, 6, 6),
+  function roundedCube(size = 0.98, radius = 0.18, segments = 6) {
+    const g = new THREE.BoxGeometry(size, size, size, segments, segments, segments),
       pos = g.attributes.position,
       norm = g.attributes.normal;
     const core = size / 2 - radius,
@@ -126,7 +139,8 @@ export function mountPortrait(track) {
   );
   const fallRotation = new THREE.Quaternion(),
     fallAxis = new THREE.Vector3(0, 0, 1);
-  function updateFigure(progress) {
+  const performance = createPerformanceScene(scene, geometry, material, figureData, roundedCube(.98, .1, 3));
+  function updateFigure(progress, state, standAge, playAge) {
     pieces.forEach((piece) => {
       const pose = piecePose(piece, progress),
         cos = Math.cos(pose.rotation),
@@ -146,6 +160,7 @@ export function mountPortrait(track) {
         );
         dummy.quaternion.copy(restRotations[i]).premultiply(fallRotation);
         dummy.scale.fromArray(figureData.transforms[i], 4);
+        performance.poseVoxel(i, dummy, state, standAge, playAge, reducedMotion.matches);
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
       });
@@ -217,6 +232,7 @@ export function mountPortrait(track) {
     lastTime = 0,
     isVisible = true,
     disposed = false;
+  let standAge = 0, playAge = 0;
   function scrollBounds() {
     const pinTop = parseFloat(getComputedStyle(sticky).top) || 0;
     const rect = track.getBoundingClientRect();
@@ -240,17 +256,34 @@ export function mountPortrait(track) {
       Math.abs(delta) < 0.00008
         ? desired
         : progress + delta * (1 - Math.exp(-dt * 16));
-    updateFigure(progress);
+    const state = performanceTimeline(progress, reducedMotion.matches);
+    const assembled = state.assembly >= assemblyEnd;
+    standAge = assembled ? Math.min(3.6, standAge + dt) : 0;
+    playAge = state.playing > .95 ? Math.min(6.4, playAge + dt) : 0;
+    performance.update(progress, state, standAge, playAge, reducedMotion.matches);
+    updateFigure(state.assembly, state, standAge, playAge);
+    cameraBlend = state.camera;
+    platformBlend = state.platform;
+    pedestal.scale.set(1 + state.platform * .52, 1, 1 + state.platform * .52);
+    pedestal.position.z = state.platform * 3.2;
+    contactShadow.scale.set(1 + state.platform * .5, 1 + state.platform * .5, 1);
+    contactShadow.position.z = -1 + state.platform * 3.2;
     updateCamera();
     renderer.render(scene, camera);
-    const assembly = clamp(progress / assemblyEnd);
+    const assembly = clamp(state.assembly / assemblyEnd);
     track.dataset.progress = String(Math.round(assembly * 100));
     scrollLabel.textContent =
-      assembly >= 1 ? "Scroll up to replay" : "Scroll to assemble";
+      state.playing > .95 ? "Scroll up to replay" : assembly >= 1 ? "Keep scrolling · take a seat" : "Scroll to assemble";
+    track.dataset.scene = state.playing > .95 ? "playing" : state.sit > 0 ? "seating" : assembly >= 1 ? "standing" : "assembling";
+    if (caption) {
+      caption.hidden = reducedMotion.matches || state.camera < .4;
+      caption.style.opacity = String(smooth(.4, .88, state.camera));
+    }
     fallback.hidden = true;
     hints.hidden = false;
     track.dataset.ready = "true";
-    if (Math.abs(desired - progress) > 0.00008) requestDraw();
+    const living = !reducedMotion.matches && ((assembled && standAge < 3.6) || (state.playing > .95 && playAge < 6.4));
+    if (Math.abs(desired - progress) > 0.00008 || living) requestDraw();
   }
   function requestDraw() {
     if (!raf && !disposed && isVisible && !document.hidden)
@@ -268,13 +301,7 @@ export function mountPortrait(track) {
       h = stage.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
-    const worldHeight = 76,
-      worldWidth = (worldHeight * w) / h;
-    camera.left = -worldWidth / 2;
-    camera.right = worldWidth / 2;
-    camera.top = worldHeight / 2;
-    camera.bottom = -worldHeight / 2;
-    camera.updateProjectionMatrix();
+    aspect = w / h;
     desired = measureProgress();
     requestDraw();
   }
@@ -308,7 +335,7 @@ export function mountPortrait(track) {
     scrollHint.hidden = reducedMotion.matches;
     help.textContent = reducedMotion.matches
       ? "Drag sideways or use the arrow keys to rotate. Escape resets the view."
-      : "Drag sideways or use the arrow keys to rotate. Scroll or use Page Up and Page Down to assemble. Escape resets the view.";
+      : "Drag sideways or use the arrow keys to rotate. Scroll or use Page Up and Page Down to assemble the portrait, then take a seat at a Moog Subsequent 37. Escape resets the view.";
     desired = measureProgress();
     if (reducedMotion.matches) progress = 1;
     resize();
@@ -399,6 +426,7 @@ export function mountPortrait(track) {
       dispose();
       fallback.hidden = false;
       hints.hidden = true;
+      if (caption) caption.hidden = true;
       stage.tabIndex = -1;
       stage.setAttribute("role", "img");
       stage.setAttribute("aria-label", "Andrew Smith");
