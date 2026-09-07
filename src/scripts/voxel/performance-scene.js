@@ -47,6 +47,14 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
     if (raycaster.ray.intersectBox(knobBox, hitPoint) && hitPoint.distanceTo(raycaster.ray.origin) < distance) result = { control: 'cutoff' };
     return result;
   }
+  function projectControls(camera) {
+    const project = p => new THREE.Vector3(...p).project(camera).toArray().slice(0, 2);
+    return {
+      keys: [[9, 24.3, 3.65], [-9.55, 24.3, 3.65], [-9.55, 24.9, 9], [9, 24.9, 9]].map(project),
+      knob: project(instrument.cutoff),
+      notes: instrument.keys.map(key => ({ midi: key.midi, x: project([key.x, 24.5, 6])[0] })),
+    };
+  }
 
   function update(progress, state, standAge, playAge, reduced, interaction = null) {
     interactive = interaction;
@@ -171,5 +179,5 @@ export function createPerformanceScene(scene, geometry, material, figureData, in
       object.position.y += (pose.group === "leftArm" ? leftGesture.lift : rightGesture.lift) * state.playing * wristWeight;
     }
   }
-  return { update, poseVoxel, pick, keyData: instrument.keys, blockCount: instrument.blocks.length, keys: instrument.keys.length };
+  return { update, poseVoxel, pick, projectControls, keyData: instrument.keys, blockCount: instrument.blocks.length, keys: instrument.keys.length };
 }

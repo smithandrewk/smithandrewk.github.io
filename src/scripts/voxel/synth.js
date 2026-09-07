@@ -1,6 +1,7 @@
 // A small, original analog-style voice. No samples, audio downloads, or autoplay.
 // AudioContext is created/resumed only by an explicit musical interaction:
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices
+import { createPlaybackSession } from './playback-session.js';
 export const noteFrequency = midi => 440 * 2 ** ((midi - 69) / 12);
 export const filterFrequency = value => 140 * (6000 / 140) ** Math.max(0, Math.min(1, value));
 export const noteName = midi => `${['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'][midi % 12]}${Math.floor(midi / 12) - 1}`;
@@ -29,7 +30,7 @@ export function makeVoiceGraph(context) {
   return { amp, filter, second, analyser, oscillators };
 }
 
-export function createSynth({ contextFactory = () => new (window.AudioContext || window.webkitAudioContext)(), onError = () => {} } = {}) {
+export function createSynth({ contextFactory = () => new (window.AudioContext || window.webkitAudioContext)(), onError = () => {}, playbackSession = createPlaybackSession() } = {}) {
   let context, graph, cutoff = .52, idleTimer, disposed = false;
   const held = new Map(), samples = new Uint8Array(1024);
   const latest = () => [...held.values()].at(-1)?.midi ?? null;
@@ -50,22 +51,28 @@ export function createSynth({ contextFactory = () => new (window.AudioContext ||
     if (disposed) return false;
     clearTimeout(idleTimer);
     try {
+      playbackSession.acquire();
       if (!context) { context = contextFactory(); graph = makeVoiceGraph(context); }
       if (context.state !== 'running') await context.resume();
       if (disposed) return false;
       tune();
       return context.state === 'running';
-    } catch { onError(); return false; }
+    } catch { playbackSession.release(); onError(); return false; }
   }
   function rest() {
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      if (!held.size && context?.state === 'running') context.suspend().catch(() => {});
+    idleTimer = setTimeout(async () => {
+      if (held.size) return;
+      try { if (context?.state === 'running') await context.suspend(); } catch {}
+      // A finger can land while suspension is pending. Resume that newer note.
+      if (held.size && !disposed) void wake(); else playbackSession.release();
     }, 1100);
   }
   function noteOn(midi, id) {
     if (disposed || !Number.isInteger(midi) || midi < 48 || midi > 84) return;
-    noteOff(id);
+    // Changing pitch under one finger keeps the gate open (legato).
+    clearTimeout(held.get(id)?.timeout);
+    held.delete(id);
     // A lost keyup can never leave the voice running indefinitely.
     held.set(id, { midi, timeout: setTimeout(() => noteOff(id), 12000) });
     void wake();
@@ -89,6 +96,7 @@ export function createSynth({ contextFactory = () => new (window.AudioContext ||
     waveform() { if (!graph) return null; graph.analyser.getByteTimeDomainData(samples); return samples; },
     dispose() {
       disposed = true; silence(); clearTimeout(idleTimer);
+      playbackSession.release();
       if (context && context.state !== 'closed') context.close().catch(() => {});
     },
   };

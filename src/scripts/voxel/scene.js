@@ -4,6 +4,7 @@ import { createPerformanceScene } from "./performance-scene.js";
 import { performanceTimeline, smooth } from "./performance-motion.js";
 import { bindPortraitRotation } from "./rotation-input.js";
 import { mountPlayableMoog } from "./playable-moog.js";
+import { portraitChapters } from "./play-discovery.js";
 import {
   makePieces,
   piecePose,
@@ -261,13 +262,14 @@ export function mountPortrait(track) {
       Math.abs(delta) < 0.00008
         ? desired
         : progress + delta * (1 - Math.exp(-dt * 16));
-    const state = performanceTimeline(progress, reducedMotion.matches);
+    const chapters = portraitChapters(progress, reducedMotion.matches);
+    const state = performanceTimeline(chapters.story, reducedMotion.matches);
     const assembled = state.assembly >= assemblyEnd;
     standAge = assembled ? Math.min(3.6, standAge + dt) : 0;
     playAge = state.playing > .95 ? Math.min(6.4, playAge + dt) : 0;
-    const interaction = instrument.update(dt, state.playing > .95 && !reducedMotion.matches);
+    const interaction = instrument.update(dt, state.playing > .95 && !reducedMotion.matches, chapters.reveal);
     instrumentFocus = interaction.focus;
-    performance.update(progress, state, standAge, playAge, reducedMotion.matches, interaction);
+    performance.update(chapters.story, state, standAge, playAge, reducedMotion.matches, interaction);
     updateFigure(state.assembly, state, standAge, playAge);
     cameraBlend = state.camera;
     platformBlend = state.platform;
@@ -277,17 +279,18 @@ export function mountPortrait(track) {
     contactShadow.position.z = -1 + state.platform * 3.2;
     updateCamera();
     renderer.render(scene, camera);
+    instrument.updateHitAreas();
     const assembly = clamp(state.assembly / assemblyEnd);
     track.dataset.progress = String(Math.round(assembly * 100));
     scrollLabel.textContent =
-      state.playing > .95 ? "Scroll up to replay" : assembly >= 1 ? "Keep scrolling · take a seat" : "Scroll to assemble";
+      state.playing > .95 ? "Keep scrolling · your turn" : assembly >= 1 ? "Keep scrolling · take a seat" : "Scroll to assemble";
     track.dataset.scene = state.playing > .95 ? "playing" : state.sit > 0 ? "seating" : assembly >= 1 ? "standing" : "assembling";
     if (caption) {
       caption.hidden = reducedMotion.matches || state.camera < .4;
       caption.style.opacity = String(smooth(.4, .88, state.camera));
       const mode = instrument.open ? 'interactive' : 'performance';
       if (caption.dataset.mode !== mode) {
-        caption.querySelector('span').innerHTML = instrument.open ? 'Make a little music.' : '<b>20%</b> playing keys.';
+        caption.querySelector('span').innerHTML = instrument.open ? 'Your turn. Play the keys.' : '<b>20%</b> playing keys.';
         caption.dataset.mode = mode;
       }
     }

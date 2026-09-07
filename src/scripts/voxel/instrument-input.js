@@ -1,58 +1,64 @@
-// Touch notes are committed on a tap, so an ordinary vertical page swipe stays silent.
-// Desktop keys sustain while held; horizontal movement on the knob changes cutoff.
-export function bindInstrumentInput(stage, { enabled, pick, press, release, getCutoff, setCutoff, signal }) {
+// Only the projected keys/knob and compact keyboard reserve touch gestures.
+// The surrounding portrait keeps native scrolling and pinch zoom.
+export function bindInstrumentInput(surface, { enabled, pick, slide = pick, press, release, getCutoff, setCutoff, signal, source = 'surface', onStart = () => {} }) {
   let gesture = null;
-  function cancel() { if (gesture?.sounding) release('surface'); gesture = null; }
+  const win = surface.ownerDocument.defaultView;
+  const touchEvents = 'ontouchstart' in win;
+  function cancel() {
+    const previous = gesture; gesture = null;
+    if (previous?.sounding) release(source);
+    if (previous?.kind === 'pointer' && surface.hasPointerCapture?.(previous.id)) surface.releasePointerCapture(previous.id);
+  }
   function begin(x, y, kind, id) {
     cancel();
-    if (!enabled()) return;
+    if (!enabled()) return false;
     const hit = pick(x, y);
-    if (!hit) return;
-    gesture = { kind, id, hit, x, y, cutoff: getCutoff(), moved: false, sounding: false };
-    if (kind === 'mouse' && hit.midi !== undefined) {
-      press(hit.midi, 'surface'); gesture.sounding = true;
-    }
+    if (!hit) return false;
+    onStart();
+    gesture = { kind, id, hit, x, y, cutoff: getCutoff(), midi: hit.midi, sounding: hit.midi !== undefined, pitchMoved: false };
+    if (gesture.sounding) press(hit.midi, source);
+    if (kind === 'pointer') surface.setPointerCapture?.(id);
+    return true;
   }
   function move(x, y) {
     if (!gesture || !enabled()) { cancel(); return false; }
     const dx = x - gesture.x, dy = y - gesture.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return false;
-    gesture.moved = true;
-    if (gesture.hit.control === 'cutoff' && Math.abs(dx) > Math.abs(dy) * 1.2) {
-      setCutoff(gesture.cutoff + dx / 160); return true;
+    if (gesture.hit.control === 'cutoff') {
+      setCutoff(gesture.cutoff + dx / 160 - dy / 180);
+    } else {
+      gesture.pitchMoved ||= Math.abs(dx) > 3;
+      const note = gesture.pitchMoved ? slide(x, gesture.y, gesture.hit, gesture.x)?.midi : gesture.midi;
+      if (note !== undefined && note !== gesture.midi) { gesture.midi = note; press(note, source); }
+      if (Math.abs(dy) > 3) setCutoff(gesture.cutoff - dy / 180);
     }
-    cancel(); return false;
+    return true;
   }
-  function finish() {
-    if (gesture && enabled() && !gesture.moved && !gesture.sounding && gesture.hit.midi !== undefined) {
-      press(gesture.hit.midi, 'tap', true);
-    }
-    cancel();
-  }
-  stage.addEventListener('pointerdown', e => {
+  surface.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch' && touchEvents) return;
     if (e.isPrimary === false || (e.pointerType !== 'touch' && e.button !== 0)) { cancel(); return; }
-    begin(e.clientX, e.clientY, e.pointerType === 'touch' ? 'pointer-touch' : 'mouse', e.pointerId);
+    if (begin(e.clientX, e.clientY, 'pointer', e.pointerId) && e.cancelable) e.preventDefault();
   }, { signal });
-  stage.addEventListener('pointermove', e => {
-    if (gesture?.kind !== 'touch' && gesture?.id === e.pointerId) move(e.clientX, e.clientY);
+  surface.addEventListener('pointermove', e => {
+    if (gesture?.kind === 'pointer' && gesture.id === e.pointerId && move(e.clientX, e.clientY) && e.cancelable) e.preventDefault();
   }, { signal });
-  stage.addEventListener('pointerup', e => {
-    if (gesture?.kind !== 'touch' && gesture?.id === e.pointerId) finish();
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) surface.addEventListener(type, e => {
+    if (gesture?.kind === 'pointer' && gesture.id === e.pointerId) cancel();
   }, { signal });
-  stage.addEventListener('pointercancel', () => { if (gesture?.kind !== 'touch') cancel(); }, { signal });
-  stage.addEventListener('pointerleave', () => { if (gesture?.kind === 'mouse') cancel(); }, { signal });
-  stage.addEventListener('touchstart', e => {
+  surface.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) { cancel(); return; }
-    const t = e.touches[0]; begin(t.clientX, t.clientY, 'touch', t.identifier);
-  }, { signal, passive: true });
-  stage.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    if (begin(t.clientX, t.clientY, 'touch', t.identifier) && e.cancelable) e.preventDefault();
+  }, { signal, passive: false });
+  surface.addEventListener('touchmove', e => {
     if (e.touches.length !== 1) { cancel(); return; }
     const t = [...e.touches].find(t => t.identifier === gesture?.id);
     if (gesture?.kind === 'touch' && t && move(t.clientX, t.clientY) && e.cancelable) e.preventDefault();
   }, { signal, passive: false });
-  stage.addEventListener('touchend', () => { if (gesture?.kind === 'touch') finish(); }, { signal });
-  stage.addEventListener('touchcancel', cancel, { signal });
-  stage.ownerDocument.defaultView.addEventListener('blur', cancel, { signal });
+  surface.addEventListener('touchend', e => {
+    if (gesture?.kind === 'touch' && ![...e.touches].some(t => t.identifier === gesture.id)) cancel();
+  }, { signal });
+  surface.addEventListener('touchcancel', cancel, { signal });
+  win.addEventListener('blur', cancel, { signal });
   signal.addEventListener('abort', cancel, { once: true });
   return cancel;
 }
