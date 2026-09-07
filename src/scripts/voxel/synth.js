@@ -2,21 +2,22 @@
 // AudioContext is created/resumed only by an explicit musical interaction:
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices
 import { createPlaybackSession } from './playback-session.js';
-const REVERB_SECONDS = 1.8;
+const REVERB_SECONDS = 6;
+export const DEFAULT_REVERB = { mix: .48, space: .65, enabled: true };
 // Let the envelope and room decay finish before suspending audio or its scope.
 export const AUDIO_TAIL_SECONDS = REVERB_SECONDS + .6;
 export const noteFrequency = midi => 440 * 2 ** ((midi - 69) / 12);
 export const filterFrequency = value => 140 * (6000 / 140) ** Math.max(0, Math.min(1, value));
 export const noteName = midi => `${['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'][midi % 12]}${Math.floor(midi / 12) - 1}`;
 
-function roomImpulse(context) {
-  const rate = context.sampleRate, length = Math.ceil(rate * REVERB_SECONDS);
+function roomImpulse(context, seconds, seedOffset = 0) {
+  const rate = context.sampleRate, length = Math.ceil(rate * seconds);
   const buffer = context.createBuffer(2, length, rate), preDelay = Math.round(rate * .018);
   // A generated stereo room: no asset fetch on the first note. Independent
   // channels add width, with a short pre-delay to preserve the key's attack.
   for (let channel = 0; channel < 2; channel++) {
     const samples = buffer.getChannelData(channel);
-    let seed = 37 + channel * 7919;
+    let seed = 37 + channel * 7919 + seedOffset;
     for (let i = preDelay; i < length; i++) {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       const t = (i - preDelay) / (length - preDelay);
@@ -42,21 +43,37 @@ export function makeVoiceGraph(context) {
     oscillator.connect(level).connect(filter); oscillator.start();
     return { oscillator, octave };
   });
-  filter.connect(second).connect(amp).connect(compressor);
+  const dry = context.createGain();
+  filter.connect(second).connect(amp).connect(dry).connect(compressor);
   // Keep the direct voice clear, with a warm room underneath every note.
   // Filtering only the reverb prevents low notes from building up in the room.
-  const reverb = context.createConvolver(), wet = context.createGain();
+  const reverb = context.createConvolver(), hall = context.createConvolver(), wet = context.createGain();
+  const roomLevel = context.createGain(), hallLevel = context.createGain();
   const lowCut = context.createBiquadFilter(), highCut = context.createBiquadFilter();
   lowCut.type = 'highpass'; lowCut.frequency.value = 180; lowCut.Q.value = .707;
-  highCut.type = 'lowpass'; highCut.frequency.value = 4200; highCut.Q.value = .707;
-  reverb.normalize = true; reverb.buffer = roomImpulse(context); wet.gain.value = .32;
-  amp.connect(lowCut).connect(reverb).connect(highCut).connect(wet).connect(compressor);
+  highCut.type = 'lowpass'; highCut.frequency.value = 5200; highCut.Q.value = .707;
+  reverb.normalize = hall.normalize = true;
+  reverb.buffer = roomImpulse(context, 1.6); hall.buffer = roomImpulse(context, REVERB_SECONDS, 1777);
+  amp.connect(lowCut).connect(reverb).connect(roomLevel).connect(highCut);
+  lowCut.connect(hall).connect(hallLevel).connect(highCut);
+  highCut.connect(wet).connect(compressor);
+  function setReverb({ mix, space, enabled }) {
+    const amount = enabled ? mix : 0, now = context.currentTime;
+    // Crossfade existing rooms; turning a knob never rebuilds an impulse or
+    // interrupts a held note. Full Mix offers an ambient, reverb-only voice.
+    dry.gain.setTargetAtTime(Math.cos(amount * Math.PI / 2), now, .035);
+    wet.gain.setTargetAtTime(Math.sin(amount * Math.PI / 2) * 2.2, now, .035);
+    roomLevel.gain.setTargetAtTime(Math.cos(space * Math.PI / 2), now, .05);
+    hallLevel.gain.setTargetAtTime(Math.sin(space * Math.PI / 2), now, .05);
+  }
+  setReverb(DEFAULT_REVERB);
   compressor.connect(analyser).connect(master).connect(context.destination);
-  return { amp, filter, second, analyser, oscillators, reverbWet: wet };
+  return { amp, filter, second, analyser, oscillators, reverbWet: wet, setReverb };
 }
 
 export function createSynth({ contextFactory = () => new (window.AudioContext || window.webkitAudioContext)(), onError = () => {}, playbackSession = createPlaybackSession() } = {}) {
   let context, graph, cutoff = .52, idleTimer, disposed = false;
+  const reverb = { ...DEFAULT_REVERB };
   const held = new Map(), samples = new Uint8Array(1024);
   const latest = () => [...held.values()].at(-1)?.midi ?? null;
   function tune() {
@@ -78,6 +95,7 @@ export function createSynth({ contextFactory = () => new (window.AudioContext ||
     try {
       playbackSession.acquire();
       if (!context) { context = contextFactory(); graph = makeVoiceGraph(context); }
+      graph.setReverb(reverb);
       if (context.state !== 'running') await context.resume();
       if (disposed) return false;
       tune();
@@ -116,6 +134,12 @@ export function createSynth({ contextFactory = () => new (window.AudioContext ||
   return {
     noteOn, noteOff, silence,
     setCutoff(value) { cutoff = Math.max(0, Math.min(1, value)); tune(); },
+    setReverb(value) {
+      for (const key of ['mix', 'space']) if (Number.isFinite(value[key])) reverb[key] = Math.max(0, Math.min(1, value[key]));
+      if (typeof value.enabled === 'boolean') reverb.enabled = value.enabled;
+      graph?.setReverb(reverb);
+    },
+    get reverb() { return { ...reverb }; },
     get note() { return latest(); },
     get cutoff() { return cutoff; },
     waveform() { if (!graph) return null; graph.analyser.getByteTimeDomainData(samples); return samples; },

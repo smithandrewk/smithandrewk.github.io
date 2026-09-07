@@ -2,12 +2,20 @@
 <h1>Offline audio verification</h1><p>Render the actual synthesizer graph without playing sound.</p>
 <button id="run">Run audio checks</button><pre id="result">Not run</pre>
 <script type="module">
-import { makeVoiceGraph, noteFrequency, filterFrequency } from '../src/scripts/voxel/synth.js';
+import { makeVoiceGraph, noteFrequency, filterFrequency, DEFAULT_REVERB } from '../src/scripts/voxel/synth.js';
 document.querySelector('#run').onclick = async () => {
   const results = [];
-  for (const cutoff of [.08, .52, .95]) for (const room of [false, true]) {
-    const rate = 44100, context = new OfflineAudioContext(2, rate * 4, rate), graph = makeVoiceGraph(context);
-    if (!room) graph.reverbWet.gain.value = 0;
+  const presets = [
+    ['dry', .52, { mix: 0, space: 1, enabled:true }],
+    ['bypass', .52, { mix: 1, space: 1, enabled:false }],
+    ['room', .52, { mix: .48, space: 0, enabled:true }],
+    ['default', .52, DEFAULT_REVERB],
+    ['vast', .52, { mix: 1, space: 1, enabled:true }],
+    ['dark', .08, DEFAULT_REVERB], ['bright', .95, DEFAULT_REVERB],
+  ];
+  for (const [name, cutoff, setting] of presets) {
+    const rate = 44100, context = new OfflineAudioContext(2, rate * 9, rate), graph = makeVoiceGraph(context);
+    graph.setReverb(setting);
     for (const { oscillator, octave } of graph.oscillators) oscillator.frequency.value = noteFrequency(60) * octave;
     graph.filter.frequency.value = filterFrequency(cutoff); graph.second.frequency.value = filterFrequency(cutoff) * 1.25;
     graph.amp.gain.setTargetAtTime(.24, .2, .012); graph.amp.gain.setTargetAtTime(0, 1.2, .075);
@@ -16,11 +24,12 @@ document.querySelector('#run').onclick = async () => {
     let peak = 0, derivative = 0, width = 0;
     for (let i = 0; i < samples.length; i++) peak = Math.max(peak, Math.abs(samples[i]), Math.abs(right[i]));
     for (let i = rate / 2; i < rate; i++) { derivative += Math.abs(samples[i] - samples[i - 1]); width += (samples[i] - right[i]) ** 2; }
-    results.push({ cutoff, room, peak, rms: rms(.5, 1), silence: rms(0, .19), decay: rms(1.9, 2.3), tail: rms(3.6, 4), width: Math.sqrt(width / (rate / 2)), brightness: derivative / (rate / 2) });
+    results.push({ name, peak, rms: rms(.5, 1), silence: rms(0, .19), decay: rms(1.9, 2.3), longTail: rms(4, 5), tail: rms(8, 9), width: Math.sqrt(width / (rate / 2)), brightness: derivative / (rate / 2) });
   }
-  const dry = results.find(r => r.cutoff === .52 && !r.room), wet = results.find(r => r.cutoff === .52 && r.room);
+  const [dry, bypass, room, wet, vast, dark, bright] = results;
   const pass = results.every(r => r.peak > .005 && r.peak < .8 && r.silence === 0 && r.tail < .000001)
-    && results[5].brightness > results[1].brightness * 2 && wet.decay > Math.max(.00001, dry.decay * 8) && wet.width > .001;
+    && bright.brightness > dark.brightness * 2 && wet.decay > Math.max(.0001, dry.decay * 8) && wet.width > .01
+    && vast.longTail > Math.max(.00001, room.longTail * 20) && bypass.decay < .000001 && Math.abs(dry.rms - bypass.rms) < .000001;
   document.querySelector('#result').textContent = JSON.stringify({ pass, results }, null, 2);
 };
 </script>

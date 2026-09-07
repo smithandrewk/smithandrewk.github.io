@@ -1,0 +1,46 @@
+<div class="pedal-ui" data-pedal-ui hidden>
+  <button class="pedal-toggle" data-pedal-toggle type="button" aria-expanded="false" aria-controls="reverb-pedal">
+    <span class="pedal-light" data-pedal-light aria-hidden="true"></span> Reverb <span data-pedal-summary>48%</span>
+  </button>
+  <div class="pedal" id="reverb-pedal" data-pedal-panel hidden role="group" aria-label="Blue room reverb pedal">
+    <button class="pedal-close" data-pedal-close type="button" aria-label="Close reverb controls">×</button>
+    <div class="pedal-brand">blue room</div>
+    <p class="pedal-subtitle">STEREO REVERB</p>
+    <div class="pedal-knobs">
+      {[{name:'mix',label:'Mix',value:48},{name:'space',label:'Space',value:65}].map(knob => <div class="pedal-control">
+        <span class="pedal-label" id={`pedal-${knob.name}-label`}>{knob.label}</span>
+        <div class="pedal-dial" data-pedal-dial={knob.name} role="slider" tabindex="0" aria-labelledby={`pedal-${knob.name}-label`} aria-label={`Reverb ${knob.name}`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={knob.value} aria-orientation="vertical" style={`--turn: ${(knob.value / 100 - .5) * 260}deg;`}>
+          <span class="dial-face"><span class="dial-mark"></span></span>
+        </div>
+        <output data-pedal-value={knob.name}>{knob.value}%</output>
+      </div>)}
+    </div>
+    <button class="pedal-bypass" data-pedal-bypass type="button" aria-label="Reverb enabled" aria-pressed="true"><span class="footswitch" aria-hidden="true"></span><span data-pedal-switch-label>ON</span></button>
+    <p class="pedal-tip">Drag the knobs ↑ or →</p>
+  </div>
+</div>
+
+<style>
+  .pedal-ui { position: absolute; right: .5rem; top: 3.6rem; z-index: 3; }
+  .pedal-ui[hidden], .pedal[hidden] { display: none; }
+  .pedal-toggle { display: flex; gap: .45rem; align-items: center; min-height: 36px; padding: .4rem .75rem; border: 1px solid #73abc3; border-radius: 99px; color: #285c74; background: #e5f2f7; box-shadow: 0 2px 8px #2244550c; font-size: .68rem; cursor: pointer; }
+  .pedal-toggle span:last-child { font-family: var(--font-mono); min-width: 2rem; text-align: right; }
+  .pedal-light { width: 5px; height: 5px; border-radius: 50%; background: #389da1; box-shadow: 0 0 5px #56ddd7; }
+  .pedal-light[data-bypassed] { background: #869caa; box-shadow: none; }
+  .pedal { position: absolute; top: 2.8rem; right: 0; width: 228px; padding: 17px 18px 10px; border: 1px solid #8dbbce; border-bottom: 5px solid #245772; border-radius: 9px; color: #fff7e8; background: linear-gradient(125deg,#6ba6bd,#4685a4 60%,#397391); box-shadow: inset 0 1px 0 #ffffff55, 0 14px 35px #12364e30, 0 3px 5px #12364e24; text-align: center; }
+  .pedal-brand { font: italic 1.65rem Georgia,serif; letter-spacing: -.065em; text-shadow: 0 1px #235d75; }
+  .pedal-subtitle { font: 8px var(--font-mono); letter-spacing: .18em; margin-top: 2px; opacity: .85; }
+  .pedal-close { position: absolute; top: 0; right: 0; width: 34px; height: 34px; font-size: 20px; opacity: .75; cursor: pointer; }
+  .pedal-knobs { display: flex; justify-content: space-between; gap: 10px; margin-top: 17px; }
+  .pedal-control { width: 84px; }
+  .pedal-label { font: 10px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+  .pedal-dial { display: grid; place-items: center; width: 84px; height: 76px; cursor: ns-resize; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; background: repeating-conic-gradient(from 230deg,transparent 0deg 28deg,#ebf4eeaa 28deg 30deg) center/70px 70px no-repeat; border-radius: 50%; }
+  .dial-face { position: relative; display: block; width: 57px; height: 57px; border: 1px solid #dddbc9; border-bottom: 4px solid #b7b9ab; border-radius: 50%; background: radial-gradient(circle at 37% 25%,#fffdf0,#e4e0cd 78%); box-shadow: 1px 4px 5px #24465780,inset 0 2px 2px #fff8; transform: rotate(var(--turn)); pointer-events: none; }
+  .dial-mark { position: absolute; top: 5px; left: calc(50% - 1.5px); width: 3px; height: 15px; border-radius: 2px; background: #274453; }
+  .pedal-control output { display: block; font: 9px var(--font-mono); min-height: 12px; letter-spacing: .015em; }
+  .pedal-bypass { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 9px; padding: 0 12px; cursor: pointer; font: 9px var(--font-mono); letter-spacing: .08em; }
+  .footswitch { width: 25px; height: 25px; border-radius: 50%; border: 3px solid #acc4cf; background: radial-gradient(circle at 30% 20%,#fff,#a8b9be 65%); box-shadow: 0 3px 1px #285d73,0 3px 5px #164058; }
+  .pedal-bypass[aria-pressed="false"] { opacity: .65; }
+  .pedal-tip { font-size: 9px; opacity: .8; }
+  .pedal-ui button:focus-visible, .pedal-dial:focus-visible { outline: 2px solid #f2d5a7; outline-offset: 3px; }
+</style>

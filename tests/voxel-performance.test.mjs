@@ -112,5 +112,9 @@ test('the physical key hit regions resolve every chromatic note from the player 
     const point = new THREE.Vector3(key.x, key.black ? 24.9 : 24.28, key.black ? 7.5 : 4.4).project(camera);
     assert.equal(performance.pick(camera, point.x, point.y)?.midi, key.midi);
   }
+  for (const [name, p] of Object.entries(makeMoogData().pedal)) {
+    const point = new THREE.Vector3(...p).project(camera);
+    assert.equal(performance.pick(camera, point.x, point.y)?.control, name);
+  }
   geometry.dispose(); material.dispose();
 });

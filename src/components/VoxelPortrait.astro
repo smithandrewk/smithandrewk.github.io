@@ -1,4 +1,5 @@
 ---
+import ReverbPedal from './ReverbPedal.astro';
 // Progressive enhancement: the existing portrait remains useful without WebGL.
 const naturals = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
 const semitones = [0, 2, 4, 5, 7, 9, 11, 12];
@@ -29,12 +30,15 @@ const sharps = [{ note: 'C sharp', midi: 61, position: 1, letter: 'W' }, { note:
         />
         <div data-instrument-hitarea="keys" class="instrument-hitarea" aria-hidden="true" hidden></div>
         <div data-instrument-hitarea="knob" class="instrument-hitarea" aria-hidden="true" hidden></div>
+        {['mix','space','bypass'].map(name => <div data-instrument-hitarea={name} class="instrument-hitarea" aria-hidden="true" hidden></div>)}
       </div>
 
       <p class="performance-caption" data-performance-caption hidden>
         <span><b>20%</b> playing keys.</span>
         <small>Moog Subsequent 37</small>
       </p>
+
+      <ReverbPedal />
 
       <div class="instrument-invite" data-instrument-invite hidden>
         <button type="button" data-instrument-open aria-expanded="false" aria-controls="instrument-controls">

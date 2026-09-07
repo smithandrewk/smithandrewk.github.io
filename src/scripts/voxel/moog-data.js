@@ -1,4 +1,5 @@
 import { Quaternion, Vector3 } from "three";
+import { makePedalData } from './pedal-data.js';
 
 // Proportions and panel organization referenced against Moog's Subsequent 37:
 // https://www.moogmusic.com/synthesizers/subsequent-37/
@@ -106,5 +107,6 @@ export function makeMoogData() {
     const t = i / 34 * Math.PI * 2;
     put([-8.1 + Math.cos(t) * 2.3, .18, 15.5 + Math.sin(t) * 1.4], [.3, .2, .3], black, "cable");
   }
-  return { blocks, keys, knobCount: knobs.length, cutoff: [-2.55, panelY(11.9) + .4, 11.79] };
+  const pedal = makePedalData(); blocks.push(...pedal.blocks);
+  return { blocks, keys, knobCount: knobs.length, pedal: pedal.controls, cutoff: [-2.55, panelY(11.9) + .4, 11.79] };
 }
